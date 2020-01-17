@@ -1,2 +1,2 @@
-a=8+9
-print(a)
+c=9-3
+print(c)
