@@ -1,74 +1,74 @@
 version: 2.1
-	jobs:
-	  code-test:
-	    docker:
-	      - image: circleci/python:3.7
-	    working_directory: ~/repo
-	    steps:
-	      - checkout
-	      - restore_cache:
-	          keys:
-	          - v1-dependencies-{{ checksum "requirements.txt" }}
-	          # fallback to using the latest cache if no exact match is found
-	          - v1-dependencies-
-	      - run:
-	          name: "Install dependencies"
-	          command: pip install --user -r requirements.txt
-	      - save_cache:
-	          paths:
-	            - ./venv
-	          key: v1-dependencies-{{ checksum "requirements.txt" }}
-	      - run:
-	          name: "Run Linter"
-	          working_directory: ~/repo
-	          command: |
-	            mkdir -p test-reports/flake8
-	            flake8 . --output-file=test-reports/flake8/flake8.txt
-	      - run:
-	          name: "Check for warnings."
-	          command: |
-	            if [ -f .flake8warnings ]; then
-	              flake8 --append-config=.flake8warnings
-	            else
-	              flake8 --extend-ignore="$FLAKE8_ERRORS"
-	            fi
-	          when: always
-	      - run:
-	          name: Check for errors.
-	          command: |
-	            if [ -f .flake8errors ]; then
-	              flake8 --append-config=.flake8errors
-	            else
-	              flake8 --extend-ignore="$FLAKE8_WARNINGS"
-	            fi
-	          when: always
-	
-	      - run:
-	          name: "Run tests"
-	          command: |
-	            flake8 --exclude=venv* --statistics
-	            flake8 . --bug-report
-	            flake8 . --benchmark
-	            flake8 . --count
-	          when: always
-	      - run:
-	          name: "Create Test Reports"
-	          working_directory: ~/repo
-	          command: |
-	            flake8_junit test-reports/flake8/flake8.txt test-reports/flake8/flake8_junit.xml
-	          when: always
-	      - store_test_results:
-	          path: test-reports
-	      
-	      - store_artifacts:
-	          path: test-reports
-	          destination: tr1
-	
-	workflows:
-	  version: 2.1
-	  code-test-result:
-	    jobs:
-	      - code-test:
-	          filters:
-	            branches:
-	              only: master
+jobs:
+  code-test:
+    docker:
+      - image: circleci/python:3.7
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+	  keys:
+	  - v1-dependencies-{{ checksum "requirements.txt" }}
+	  # fallback to using the latest cache if no exact match is found
+	  - v1-dependencies-
+      - run:
+	  name: "Install dependencies"
+	  command: pip install --user -r requirements.txt
+      - save_cache:
+	  paths:
+	    - ./venv
+	  key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+	  name: "Run Linter"
+	  working_directory: ~/repo
+	  command: |
+	    mkdir -p test-reports/flake8
+	    flake8 . --output-file=test-reports/flake8/flake8.txt
+      - run:
+	  name: "Check for warnings."
+	  command: |
+	    if [ -f .flake8warnings ]; then
+	      flake8 --append-config=.flake8warnings
+	    else
+	      flake8 --extend-ignore="$FLAKE8_ERRORS"
+	    fi
+	  when: always
+      - run:
+	  name: Check for errors.
+	  command: |
+	    if [ -f .flake8errors ]; then
+	      flake8 --append-config=.flake8errors
+	    else
+	      flake8 --extend-ignore="$FLAKE8_WARNINGS"
+	    fi
+	  when: always
+
+      - run:
+	  name: "Run tests"
+	  command: |
+	    flake8 --exclude=venv* --statistics
+	    flake8 . --bug-report
+	    flake8 . --benchmark
+	    flake8 . --count
+	  when: always
+      - run:
+	  name: "Create Test Reports"
+	  working_directory: ~/repo
+	  command: |
+	    flake8_junit test-reports/flake8/flake8.txt test-reports/flake8/flake8_junit.xml
+	  when: always
+      - store_test_results:
+	  path: test-reports
+
+      - store_artifacts:
+	  path: test-reports
+	  destination: tr1
+
+workflows:
+  version: 2.1
+  code-test-result:
+    jobs:
+      - code-test:
+	  filters:
+	    branches:
+	      only: master
