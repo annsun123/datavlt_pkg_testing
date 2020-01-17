@@ -1,0 +1,10 @@
+client_config_backend: settings
+client_config:
+  client_id: 290917856569-gbm9fcf7hl94voadgcutsnrs29obgp8n.apps.googleusercontent.com
+  client_secret: SAKIa5Nojpv3bsO2Hh_uYl0l
+
+save_credentials: True
+save_credentials_backend: file
+save_credentials_file: credentials.json
+
+get_refresh_token: False
