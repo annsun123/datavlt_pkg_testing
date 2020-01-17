@@ -1,0 +1,49 @@
+
+----when volumes/mounting the local folders, please change the volume in under pkg_datavlt service in docker-compose files
+
+volumes:
+      - /home/anyan/pkg_datavlt/:/pkg_datavlt #[/your_home_location/pkg_folder/:/pkg_datavlt]
+      
+
+
+#when connecting to the 
+
+Dataset Table:
+	1. transaction dataset which contains both indomarte and non-indomarate data. columns:[] 
+	2. customer main table which Evlin uploads whenever updates happen
+columns:[] . The current customer data/code mocking up the shoptype, and province that Evlin wants to add. Need updates from Evlin. 
+
+
+
+
+
+
+
+main table logic:
+ [prepare customer table>> process transaction table >> if customer table contain error,report>>loading inserting  function >>. mapping customer table>>> if sales data include customer not in customer master list, report>>>insert customer table>>> catch error in final table >>insert final table >>> prepare json files >>>prepare customer profiling cluster>>> prepare final json>>>rfm json>>> prepare customer error json >>>sending email]
+
+
+the possible table value inserting error: 
+	1. the columns name in the database does not matching the inserting table.
+	2. the values not valid for inserting (example: numeric column having text values)
+
+
+There will be seven logging files:
+the log file have name format: type_logDate_of_created.log
+	1. main_log: capture main processing procedure []
+	2. otherfunction_log: this log files recording whether row insert into the table successfully and tracking geo_location api calling. Can see which address api called successfully and which one doesn't
+	3. table_processing_log: this log file will tracking the table processing procedure for both customer table and transaction table. The log tracking main processing steps. So if code breaks, can check where codes stops at.
+	4. gdrive_log: this is recording data downloading process from the google drive. if sucessfully, will print sucessfully download
+	5. rfm_log: nothing much recorded
+	6. value_validation_log: if transaction data contains negative or nan value. Then the json error output will be capture in this log file
+
+
+
+
+
+
+
+
+
+
+

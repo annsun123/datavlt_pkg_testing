@@ -1,0 +1,39 @@
+version: "3"
+services:
+  db:
+    image: "postgres:11"
+    container_name: "my_postgres"
+    environment:
+      - POSTGRES_USER=Salim_PKG_Admin
+      - POSTGRES_PASSWORD=Datavlt12345
+      - POSTGRES_DB=Salim_PKG_DB
+      
+    ports:
+      - "5432:5432"
+    networks:
+      - pkg_datavlt
+    volumes:
+      - $PWD/salim_pkg_dbdata:/var/lib/postgresql
+      - $PWD/salim_pkg_dbdata/data:/var/lib/postgresql/data
+
+  pkg_datavlt:
+    image: "pkg_datavlt"
+    networks:
+      - pkg_datavlt
+    volumes:
+      - $PWD:/pkg_datavlt_2
+
+    
+    depends_on:
+      - db
+    links:
+      - db
+    restart: always
+
+networks:
+  pkg_datavlt:
+    driver: bridge
+
+volumes:
+  salim_pkg_dbdata:
+ 
