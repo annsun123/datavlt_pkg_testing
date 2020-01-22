@@ -7,4 +7,9 @@ sklearn==0.0
 xlrd==1.2.0
 openpyxl==2.6.4
 apscheduler==3.6.3
-
+flake8 == 3.7.9
+pytest == 3.0.1
+pytest-cov == 2.0
+coverage == 5.0.3
+flake8-junit-report == 2.1.0
+black == 19.3b0
