@@ -20,16 +20,16 @@ from codes.class_logging import logging_func
 
 geo = logging_func('otherfunction_log', filepath='')
 otherlogger = geo.myLogger()
-   
+
 # with open('./json_credential/postgres_credential_external.json') as file:
 with open('./json_credential/postgres_credential_amazon.json') as file:
     data = json.load(file)
 
-    
+
 def google_geocode1(address_list, address_col, reference_col, cred):
     url = 'https://maps.googleapis.com/maps/api/geocode/json'
     result = []
-    
+
     LIMIT = 2500
     unused_limit = LIMIT
     period = datetime.timedelta(hours=24)
@@ -47,10 +47,10 @@ def google_geocode1(address_list, address_col, reference_col, cred):
             'Latitude': None,
             'Longitude': None
         }
-    
+
         params = {'address': address, 'key': cred}
         response = requests.get(url, params=params)
-    
+
         if response.status_code == 400:
             result.append(answer)
             logging.info('address not geocodeable at item ' + str(idx) + ': ' + str(address))
@@ -85,7 +85,7 @@ def google_geocode1(address_list, address_col, reference_col, cred):
         except (IndexError, KeyError) as e:
             result.append(answer)
             otherlogger.error('No location match for item ' + str(idx) + ': ' + str(address)) 
-    
+
         unused_limit -= 1
         if unused_limit < 1:
             elapsed_period = datetime.now() - limit_start_time
@@ -101,13 +101,13 @@ def google_geocode1(address_list, address_col, reference_col, cred):
 
     if str(type(address_list)) == "<class 'pandas.core.series.Series'>":
         result_df = pd.DataFrame(result, columns=[reference_col,address_col,
-                                                  'Formatted Address', 'Latitude', 
+                                                  'Formatted Address', 'Latitude',
                                                   'Longitude'], index=address_list.index)
     else:
-        result_df = pd.DataFrame(result, 
+        result_df = pd.DataFrame(result,
                                  columns=[reference_col,address_col,
                                           'Formatted Address', 'Latitude', 'Longitude'])
-    otherlogger.info('Completed geocoding ' + str(len(address_list)) + ' addresses.')       
+    otherlogger.info('Completed geocoding ' + str(len(address_list)) + ' addresses.')
     return result_df, error_address
 
 
@@ -145,12 +145,12 @@ def sql_insert(table_name, data_dict):
         INSERT INTO table_name Graph,  Processing_Date,  output_json)
         VALUES (%(Graph)s, %(Processing_Date)s, %(output_json)s );
     '''
-    
+
     sql = '''
         INSERT INTO %s (%s)
         VALUES (%%(%s)s );
         ''' % (table_name, ', '.join(data_dict), ')s, %('.join(data_dict))
-       
+
     return sql
 
 
@@ -170,9 +170,9 @@ def creating_plot(table_name, item, table_creating_command):
 # table_name = table_name
     sql = sql_insert(table_name, item)
     status = table_existance(conn, table_name)
-    
+
     try:
-    
+
         if status:
             print('table exists')
             conn=create_conn()
@@ -183,7 +183,7 @@ def creating_plot(table_name, item, table_creating_command):
                 otherlogger.info('Rows Inserted Sucessfully in  table')
             else:
                 otherlogger.info('Could not insert Rows in  table')
-        
+
             cur.close()
         else:
             print('create table')
@@ -199,7 +199,7 @@ def creating_plot(table_name, item, table_creating_command):
                 otherlogger.info('Could not insert Rows in  table')
             cur.close()
             cur.close()
-            
+
     except Exception as e:
         otherlogger.info('not successful')
         conn.rollback()
