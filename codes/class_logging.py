@@ -7,6 +7,8 @@ Created on Sun Dec  1 15:40:00 2019
 
 import logging
 import datetime
+
+
 class logging_func:
     def __init__(self,logger_name,filepath):
         self.logger_name=logger_name
