@@ -34,7 +34,7 @@ def problem_values(df_final):
     if len(problematic_values) > 0:
         validationlogger.error('existing nan or negative quantity values')
 
-#sending the problematic_value through the email
+# sending the problematic_value through the email
     else:
         validationlogger.info('all values are valid')
         validationlogger.error(problematic_values)
