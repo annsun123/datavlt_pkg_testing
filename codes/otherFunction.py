@@ -13,19 +13,20 @@ import psycopg2
 import psycopg2.extras
 from psycopg2.extras import Json
 import datetime
+from datetime import timedelta
 import json
 import logging
 from codes.class_logging import logging_func
 
-geo=logging_func('otherfunction_log',filepath='')
-otherlogger=geo.myLogger()
+geo = logging_func('otherfunction_log', filepath='')
+otherlogger = geo.myLogger()
+   
+# with open('./json_credential/postgres_credential_external.json') as file:
+with open('./json_credential/postgres_credential_amazon.json') as file:
+    data = json.load(file)
 
     
-with open('./json_credential/postgres_credential_external.json') as file:
-#with open('./json_credential/postgres_credential_amazon.json') as file:
-    data=json.load(file)
-
-def google_geocode1(address_list,address_col,reference_col, cred):
+def google_geocode1(address_list, address_col, reference_col, cred):
     url = 'https://maps.googleapis.com/maps/api/geocode/json'
     result = []
     
@@ -35,12 +36,12 @@ def google_geocode1(address_list,address_col,reference_col, cred):
     limit_start_time = datetime.datetime.now()
     first_pass = True
     est_passes = len(address_list) / LIMIT
-    error_address=[]
-    for idx,rows in address_list.iterrows():
-        address=rows['full_address']
+    error_address = []
+    for idx, rows in address_list.iterrows():
+        address = rows['full_address']
         customer_id=rows[reference_col]
         answer = {
-            reference_col:customer_id,
+            reference_col: customer_id,
             'full_address': address,
             'Formatted Address': None,
             'Latitude': None,
@@ -61,19 +62,17 @@ def google_geocode1(address_list,address_col,reference_col, cred):
             break
         body = json.loads(response.text)
 
-        if len(body['results'])==0:
+        if len(body['results']) == 0:
             error_address.append(idx)
             for i in range(len(address.split(','))):
-                address=','.join(address.split(',')[i+1:]).lstrip()
+                address = ','.join(address.split(',')[i + 1:]).lstrip()
                 params = {'address': address, 'key': cred}
                 response = requests.get(url, params=params)
                 body = json.loads(response.text)
-                if len(body['results'])!=0:
+                if len(body['results']) != 0:
                     break
         else:
-            body=body
-
- 
+            body = body
 
         try:
             first_match = body['results'][0]
@@ -85,10 +84,8 @@ def google_geocode1(address_list,address_col,reference_col, cred):
             otherlogger.info('Item ' + str(idx) + ' geocoded.')
         except (IndexError, KeyError) as e:
             result.append(answer)
-            otherlogger.error('No location match for item ' + str(idx) + ': ' + str(address))
-
-        
-        
+            otherlogger.error('No location match for item ' + str(idx) + ': ' + str(address)) 
+    
         unused_limit -= 1
         if unused_limit < 1:
             elapsed_period = datetime.now() - limit_start_time
@@ -98,27 +95,32 @@ def google_geocode1(address_list,address_col,reference_col, cred):
             if remaining_seconds > 0 and first_pass == True and est_passes > 1:
                 otherlogger.info('Reached free limit for today in ' + str(elapsed_period // 3600) + ' hours, ' + str((elapsed_period % 3600) // 60) + ' min.')
                 otherlogger.info('Estimated completion at ' + str(est_time.isoformat()[:19]) + ' local time.')
-               # logging.info('Resuming in ' + str(remaining_seconds // 3600) + ' hours, ' + str((remaining_seconds % 3600) // 60) + ' min.')
+
                 sleep(remaining_seconds)
             unused_limit = 2500
-            start_time = datetime.now()
-    
+
     if str(type(address_list)) == "<class 'pandas.core.series.Series'>":
-        result_df = pd.DataFrame(result, columns=[reference_col,address_col, 'Formatted Address', 'Latitude', 'Longitude'], index=address_list.index)
+        result_df = pd.DataFrame(result, columns=[reference_col,address_col,
+                                                  'Formatted Address', 'Latitude', 
+                                                  'Longitude'], index=address_list.index)
     else:
-        result_df = pd.DataFrame(result, columns=[reference_col,address_col, 'Formatted Address', 'Latitude', 'Longitude'])
-    otherlogger.info('Completed geocoding ' + str(len(address_list)) + ' addresses.')          
-    return result_df,error_address
+        result_df = pd.DataFrame(result, 
+                                 columns=[reference_col,address_col,
+                                          'Formatted Address', 'Latitude', 'Longitude'])
+    otherlogger.info('Completed geocoding ' + str(len(address_list)) + ' addresses.')       
+    return result_df, error_address
 
 
 def table_existance(conn,table_name):
     cur = conn.cursor()
 
-    cur.execute("select * from information_schema.tables where table_name=%s", (table_name,))
-    status=bool(cur.rowcount)
+    cur.execute("select * from information_schema.tables where table_name=%s",
+                (table_name,))
+    status = bool(cur.rowcount)
     cur.close()
     conn.close()
     return status
+
 
 def table_check(conn, command_exists):
     cur = conn.cursor()
@@ -128,59 +130,51 @@ def table_check(conn, command_exists):
     return rst 
 
 
-
 def create_conn():
-    conn=None
-    #conn = psycopg2.connect("host='test-db.cxxcau9jx15i.ap-southeast-1.rds.amazonaws.com' port=5432 dbname='testdb' user='scott' password='mkgi7Fq5MhLO80uf'") 
-    conn = psycopg2.connect("host='"+data['db_host']+"' "+"port='"+data['db_port']+"' "+"dbname='"+data['db_name']+"' "+"user='"+data['db_user']+"' "+"password='"+data['db_password']+"'")    
+    conn = None
+# conn = psycopg2.connect("host='test-db.cxxcau9jx15i.ap-southeast-1.rds.amazonaws.com'
+# port=5432 dbname='testdb' user='scott' password='mkgi7Fq5MhLO80uf'") 
+    conn = psycopg2.connect("host='" + data['db_host'] + "' " + "port='" + data['db_port'] + "' " + "dbname='" + data['db_name'] + "' " + "user='" + data['db_user']+"' "+"password='" + data['db_password'] + "'")    
     return conn
 
 
-########### Jsson File Functions ############
-def sql_insert(table_name,data_dict):
+# Jsson File Function
+def sql_insert(table_name, data_dict):
     '''
         The format shall be:
         INSERT INTO table_name Graph,  Processing_Date,  output_json)
         VALUES (%(Graph)s, %(Processing_Date)s, %(output_json)s );
     '''
     
-    sql='''
+    sql = '''
         INSERT INTO %s (%s)
         VALUES (%%(%s)s );
-        '''   % (table_name, ',  '.join(data_dict),  ')s, %('.join(data_dict))
+        ''' % (table_name, ', '.join(data_dict), ')s, %('.join(data_dict))
        
     return sql
 
+
 def item_creating(json_input, graph_type):
     item = {
-    'Type': graph_type,
-    'Processing_Date': datetime.date.today(),#.strftime(' %d, %b %Y'),
-    'output_json':Json(json_input)
+        'Type': graph_type,
+        'Processing_Date': datetime.date.today(),  # .strftime(' %d, %b %Y'),
+        'output_json': Json(json_input)
     }
-    return item
+    return item  
 
 
+def creating_plot(table_name, item, table_creating_command):
 
+    conn = create_conn()
 
+# table_name = table_name
+    sql = sql_insert(table_name, item)
+    status = table_existance(conn, table_name)
     
-
-def creating_plot(table_name,item,table_creating_command):
-
-    conn=create_conn()
-   
-
-    #table_name = table_name
-    sql=sql_insert(table_name,item)
-    status=table_existance(conn,table_name)
-    
- 
     try:
     
-      
-        
-        
         if status:
-            print('table exists')    
+            print('table exists')
             conn=create_conn()
             cur=conn.cursor()
             cur.execute(sql, item)
@@ -193,10 +187,10 @@ def creating_plot(table_name,item,table_creating_command):
             cur.close()
         else:
             print('create table')
-            conn=create_conn()
-            cur=conn.cursor()
+            conn = create_conn()
+            cur = conn.cursor()
 
-            cur.execute('CREATE TABLE '+ table_name+ ' ' +table_creating_command)
+            cur.execute('CREATE TABLE ' + table_name + ' ' + table_creating_command)
             cur.execute(sql, item)
             conn.commit()
             if(cur.rowcount > 0):
@@ -213,5 +207,3 @@ def creating_plot(table_name,item,table_creating_command):
         conn.commit()
         cur.close()
         conn.close()
-
-###########################################################
