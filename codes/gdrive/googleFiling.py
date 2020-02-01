@@ -22,15 +22,15 @@ def downloadfiles(downloadPath, google_api, delete_status):
 #Get connection
     gauth = GoogleAuth('./codes/gdrive/settings.yaml')
 
-    gauth.LoadCredentialsFile('./codes/gdrive/credentials.json')  
+    gauth.LoadCredentialsFile('./codes/gdrive/credentials.json')
     drive = GoogleDrive(gauth)
-    
+
 # get files from main folder and folder id of Archive folder
 # fileList = drive.ListFile({'q': "'19nFd8wCUMsjVqrbEQpfdBaAjj2ja-31g' in parents and trashed=false"}).GetList()
     fileList = drive.ListFile({'q': "'" + google_api['file_address'] + "' in parents and trashed=false"}).GetList()
-    
+
     file_list_archive = google_api['archive_address']
-    
+
     file_downloaded = []
     for file in fileList:
         if 'sheet' in file.metadata['mimeType'] or 'ms-excel' in file.metadata['mimeType']:
@@ -49,9 +49,9 @@ def downloadfiles(downloadPath, google_api, delete_status):
             file_arch['title'] = filename_arch[0] + "_" + today_dt + '.' + filename_arch[1]
             file_arch.Upload()
             if delete_status == "T":
-                
+
                 dowfilelogger.info('Deleting file from folder')
                 file.Delete()
 
     dowfilelogger.info('number of files', cnt)
-    return file_downloaded,cnt
+    return file_downloaded, cnt
