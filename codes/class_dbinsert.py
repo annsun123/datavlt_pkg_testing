@@ -4,8 +4,8 @@ import datetime
 import psycopg2
 import math
 from psycopg2.extras import Json
-# Self Build-in Packages 
-from codes.otherFunction import table_existance, create_conn, table_check
+# Self Build-in Packages
+from codes.otherFunction import create_conn, table_check
 from codes.class_logging import logging_func
 db_logging = logging_func('db_inserting_log', filepath='')
 dblogger = db_logging.myLogger()
@@ -21,15 +21,14 @@ class inserting_table:
                  master_list_shoptype,
                  master_list_address,
                  master_list_contact):
-            self.transaction_nonindo = transaction_nonindo
-            self.transaction_indo = transaction_indo
-            self.final_customer_table = final_customer_table
-            self.master_list_city = master_list_city
-            self.master_list_province = master_list_province
-            self.master_list_shoptype = master_list_shoptype
-            self.master_list_address = master_list_address
-            self.master_list_contact = master_list_contact
-
+        self.transaction_nonindo = transaction_nonindo
+        self.transaction_indo = transaction_indo
+        self.final_customer_table = final_customer_table
+        self.master_list_city = master_list_city
+        self.master_list_province = master_list_province
+        self.master_list_shoptype = master_list_shoptype
+        self.master_list_address = master_list_address
+        self.master_list_contact = master_list_contact
 
     def mapping_nonindo_customer(self):
 
@@ -39,29 +38,29 @@ class inserting_table:
 
         try:
 
-#preparing four tables: final_non_indo, customer_non_indo, final_indo, cusotmer_indo
+    #preparing four tables: final_non_indo, customer_non_indo, final_indo, cusotmer_indo
             self.transaction_nonindo['customer_id'] = self.transaction_nonindo['customer_id'].apply(lambda x: str(x))
-        
+
             customer_non_indo = self.final_customer_table[
-                    self.final_customer_table['indo_type'] == 'NON_INDO'
+                self.final_customer_table['indo_type'] == 'NON_INDO'
             ]
 
-#mapping none indomarte transaction table to the none indomrate
-#customer table by using the methods of left merging 
+    # mapping none indomarte transaction table to the none indomrate
+    # customer table by using the methods of left merging
 
             final_non_indo = self.transaction_nonindo.merge(
-                    customer_non_indo[['customer_id',
-                                       'city',
-                                       'province',
-                                       'shop_type',
-                                       'customer_address',
-                                       'latitude', 
-                                       'longtitude']],
-                    how='left',
-                    on=['customer_id']
+                customer_non_indo[['customer_id',
+                                   'city',
+                                   'province',
+                                   'shop_type',
+                                   'customer_address',
+                                   'latitude',
+                                   'longtitude']],
+                how='left',
+                on=['customer_id']
             )
 
-            non_customer_info = [x for x in final_non_indo['customer_id'].unique() 
+            non_customer_info = [x for x in final_non_indo['customer_id'].unique()
                                  if x not in customer_non_indo['customer_id'].unique()]
 
             dblogger.info('successfully update customer info to transaction table')
@@ -76,15 +75,14 @@ class inserting_table:
             df_transaction['month'] = df_transaction['Date'].apply(lambda x: x.month)
             df_transaction['week_of_month'] = df_transaction['Date'].apply(
                     lambda x: np.nan if pd.isnull(x)
-                    else int(math.ceil((x.day + x.replace(day = 1).weekday()) / 7.0))
+                    else int(math.ceil((x.day + x.replace(day=1).weekday())/7.0))
             )
             df_transaction['system_date'] = datetime.date.today()
-            df_transaction.loc[df_transaction['city'].isna(),'city'] = 'CITY NA'
+            df_transaction.loc[df_transaction['city'].isna(), 'city'] = 'CITY NA'
             dblogger.info('mapping successfully')
-            return df_transaction,non_customer_info
+            return df_transaction, non_customer_info
         except:
             dblogger.info('please checking the table values')
-
 
     def mapping_indo_customer(self):
 
@@ -94,8 +92,8 @@ class inserting_table:
 
         try:
 
-#mapping indomarte transaction table to the indomrate customer table by using
-#the methods of left merging by creating new columns in transaction tables and mapping 
+    # mapping indomarte transaction table to the indomrate customer table by using
+    # the methods of left merging by creating new columns in transaction tables and mapping 
             customer_indo = self.final_customer_table[self.final_customer_table['indo_type']=='INDO']
 
             self.transaction_indo[self.master_list_city] = np.nan
@@ -107,17 +105,18 @@ class inserting_table:
             non_customer_info = []
 
             for x in self.transaction_indo['Distribution Center'].unique():
-                if  x in customer_indo['customer_name'].unique():
+                if x in customer_indo['customer_name'].unique():
 
-                    self.transaction_indo.loc[self.transaction_indo['Distribution Center']==x, [self.master_list_city,
-                                                                                                self.master_list_province,
-                                                                                                self.master_list_shoptype,
-                                                                                                'latitude',
-                                                                                                'longtitude']] = customer_indo[customer_indo['customer_name']==x][['city',
-                                                                                                'province',
-                                                                                                'shop_type',
-                                                                                                'latitude',
-                                                                                                'longtitude']].iloc[-1].values
+                    self.transaction_indo.loc[self.transaction_indo['Distribution Center'] == x, 
+                                              [self.master_list_city,
+                                               self.master_list_province,
+                                               self.master_list_shoptype,
+                                               'latitude',
+                                               'longtitude']] = customer_indo[customer_indo['customer_name'] == x][['city',
+                                                                                                                    'province',
+                                                                                                                    'shop_type',
+                                                                                                                    'latitude',
+                                                                                                                    'longtitude']].iloc[-1].values
                 else:
 
                     non_customer_info.append(x)
@@ -132,17 +131,16 @@ class inserting_table:
             df_transaction['Invoice Date'] = pd.to_datetime(df_transaction['Invoice Date'])
             df_transaction['year'] = df_transaction['Invoice Date'].apply(lambda x: x.year)
             df_transaction['month'] = df_transaction['Invoice Date'].apply(lambda x: x.month)
-            df_transaction['week_of_month'] = df_transaction['Invoice Date'].apply(lambda x: np.nan 
+            df_transaction['week_of_month'] = df_transaction['Invoice Date'].apply(lambda x: np.nan
                                                                                    if pd.isnull(x)
-                                                                                   else int(math.ceil((x.day + x.replace(day = 1).weekday()) / 7.0)))
+                                                                                   else int(math.ceil((x.day + x.replace(day=1).weekday())/7.0)))
             df_transaction['system_date'] = datetime.date.today()
             df_transaction.loc[df_transaction[self.master_list_city].isna(),
                                self.master_list_city] = 'CITY NA'
-            return df_transaction,non_customer_info
+            return df_transaction, non_customer_info
 
         except:
             dblogger.info('please checking the table values')
-
 
     def inserting_customer_table(self):
 
@@ -166,10 +164,10 @@ class inserting_table:
 
                  """)
             command_exists = (
-                """  
+                """
                 SELECT EXISTS (
                         SELECT 1
-                        FROM   information_schema.tables 
+                        FROM   information_schema.tables
                         WHERE  table_schema = 'public'
                         AND    table_name = 'customer_table'
                         );
@@ -179,9 +177,9 @@ class inserting_table:
             cur = con.cursor()
             rst = table_check(con, command_exists)
             if(rst):
-                dblogger.info('table exists')           
+                dblogger.info('table exists')
                 cur = con.cursor()
-                
+
                 if 'Unnamed: 0' in self.final_customer_table.columns:
                     self.final_customer_table = self.final_customer_table.drop('Unnamed: 0', 1)
                 else:
@@ -197,7 +195,7 @@ class inserting_table:
             else:
                 cur = con.cursor()
                 cur.execute(command_create)
-                
+
                 if 'Unnamed: 0' in self.final_customer_table.columns:
                     self.final_customer_table = self.final_customer_table.drop('Unnamed: 0', 1)
                 else:
@@ -222,7 +220,6 @@ class inserting_table:
 
 
 def insert_nonindo_table(df_final):
-
 
     try:
         command_create = ("""
@@ -252,14 +249,15 @@ def insert_nonindo_table(df_final):
          """)
 
         command_exists = (
-                """  
-                SELECT EXISTS (
-                        SELECT 1
-                        FROM   information_schema.tables 
-                        WHERE  table_schema = 'public'
-                        AND    table_name = 'final_nonindo'
-                        );
-                """)
+            """
+            SELECT EXISTS (
+            SELECT 1
+            FROM   information_schema.tables
+            WHERE  table_schema = 'public'
+            AND    table_name = 'final_nonindo'
+            );
+            """
+        )
 
         con = create_conn()
         cur = con.cursor()
@@ -286,12 +284,12 @@ def insert_nonindo_table(df_final):
                 dblogger.info('Could not insert Rows in final_nonindo')
             cur.close()
     except Exception as e:
-            con.rollback()
-            dblogger.error(e)
+        con.rollback()
+        dblogger.error(e)
     finally:
-            con.commit()
-            cur.close()
-            con.close()
+        con.commit()
+        cur.close()
+        con.close()
 
 
 def insert_indo_table(df_final):
@@ -299,10 +297,10 @@ def insert_indo_table(df_final):
     try:
         command_create = ("""
          CREATE TABLE final_indo(
-         invoice_date date NOT NULL,  
+         invoice_date date NOT NULL,
          distribution_center text NOT NULL,
          qty_mc numeric,
-         amount numeric, 
+         amount numeric,
          sku text NOT NULL,
          series_num text NOT NULL,
          qty_packs numeric,
@@ -311,24 +309,25 @@ def insert_indo_table(df_final):
          province text,
          shop_type text,
          latitude numeric,
-         longtitude numeric,  
+         longtitude numeric,
          year numeric,
          month numeric,
          week_of_month numeric,
-         system_date date NOT NULL       
+         system_date date NOT NULL 
         );
 
          """)
 
         command_exists = (
-                """  
-                SELECT EXISTS (
-                        SELECT 1
-                        FROM   information_schema.tables 
-                        WHERE  table_schema = 'public'
-                        AND    table_name = 'final_indo'
-                        );
-                """)
+            """
+            SELECT EXISTS (
+            SELECT 1
+            FROM  information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'final_indo'
+            );
+            """
+        )
 
         con = create_conn()
         cur = con.cursor()
@@ -355,9 +354,9 @@ def insert_indo_table(df_final):
                 dblogger.info('Could not insert Rows in final_indo')
             cur.close()
     except Exception as e:
-            con.rollback()
-            dblogger.error(e)
+        con.rollback()
+        dblogger.error(e)
     finally:
-            con.commit()
-            cur.close()
-            con.close()
+        con.commit()
+        cur.close()
+        con.close()
