@@ -16,7 +16,7 @@ import os
 def sending_emails(from_address, user_name, password, receiving_address):
     EMAIL_HOST = 'email-smtp.us-east-1.amazonaws.com'
     EMAIL_HOST_USER = user_name
-    EMAIL_HOST_PASSWORD =password
+    EMAIL_HOST_PASSWORD = password
     EMAIL_PORT = 587
 
     msg = MIMEMultipart('alternative')
@@ -31,10 +31,10 @@ def sending_emails(from_address, user_name, password, receiving_address):
 
 # Second Half
     for file in os.listdir('log'):
-        attachment = open('log/'+file, 'rb')
+        attachment = open('log/' + file, 'rb')
         file_name = file
         part = MIMEBase('application', "octet-stream")
-# if wnat to sending the log fi   
+# if wnat to sending the log fi
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
         part.add_header('Content-Disposition', 'attachment', filename=file_name)
