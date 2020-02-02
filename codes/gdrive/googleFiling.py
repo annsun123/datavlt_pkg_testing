@@ -15,18 +15,18 @@ dowfilelogger = logger.myLogger()
 
 
 def downloadfiles(downloadPath, google_api, delete_status):
-   
+
     today_dt = datetime.date.today().strftime("%Y-%m-%d")
     cnt = 0
 
-#Get connection
+   # Get connection
     gauth = GoogleAuth('./codes/gdrive/settings.yaml')
 
     gauth.LoadCredentialsFile('./codes/gdrive/credentials.json')
     drive = GoogleDrive(gauth)
 
-# get files from main folder and folder id of Archive folder
-# fileList = drive.ListFile({'q': "'19nFd8wCUMsjVqrbEQpfdBaAjj2ja-31g' in parents and trashed=false"}).GetList()
+   # get files from main folder and folder id of Archive folder
+   # fileList = drive.ListFile({'q': "'19nFd8wCUMsjVqrbEQpfdBaAjj2ja-31g' in parents and trashed=false"}).GetList()
     fileList = drive.ListFile({'q': "'" + google_api['file_address'] + "' in parents and trashed=false"}).GetList()
 
     file_list_archive = google_api['archive_address']
@@ -38,7 +38,7 @@ def downloadfiles(downloadPath, google_api, delete_status):
 
             dowfilelogger.info('Downloading file %s from Google Drive' % file['title'])
             file.GetContentFile(downloadPath + file['title'])  # Save Drive file as a local file
-    
+
             dowfilelogger.info('Archving file')
             file_arch = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": file_list_archive}]})
             file_arch.SetContentFile(downloadPath + file['title'])
