@@ -39,7 +39,7 @@ def google_geocode1(address_list, address_col, reference_col, cred):
     error_address = []
     for idx, rows in address_list.iterrows():
         address = rows['full_address']
-        customer_id=rows[reference_col]
+        customer_id = rows[reference_col]
         answer = {
             reference_col: customer_id,
             'full_address': address,
@@ -100,9 +100,13 @@ def google_geocode1(address_list, address_col, reference_col, cred):
             unused_limit = 2500
 
     if str(type(address_list)) == "<class 'pandas.core.series.Series'>":
-        result_df = pd.DataFrame(result, columns=[reference_col,address_col,
-                                                  'Formatted Address', 'Latitude',
-                                                  'Longitude'], index=address_list.index)
+        result_df = pd.DataFrame(result, 
+                                 columns=[reference_col,
+                                          address_col,
+                                          'Formatted Address',
+                                          'Latitude',
+                                          'Longitude'],
+                                 index=address_list.index)
     else:
         result_df = pd.DataFrame(result,
                                  columns=[reference_col,address_col,
@@ -111,7 +115,7 @@ def google_geocode1(address_list, address_col, reference_col, cred):
     return result_df, error_address
 
 
-def table_existance(conn,table_name):
+def table_existance(conn, table_name):
     cur = conn.cursor()
 
     cur.execute("select * from information_schema.tables where table_name=%s",
@@ -127,14 +131,14 @@ def table_check(conn, command_exists):
     cur.execute(command_exists)
     rst = cur.fetchone()[0]
     cur.close()
-    return rst 
+    return rst
 
 
 def create_conn():
     conn = None
 # conn = psycopg2.connect("host='test-db.cxxcau9jx15i.ap-southeast-1.rds.amazonaws.com'
-# port=5432 dbname='testdb' user='scott' password='mkgi7Fq5MhLO80uf'") 
-    conn = psycopg2.connect("host='" + data['db_host'] + "' " + "port='" + data['db_port'] + "' " + "dbname='" + data['db_name'] + "' " + "user='" + data['db_user']+"' "+"password='" + data['db_password'] + "'")    
+# port=5432 dbname='testdb' user='scott' password='mkgi7Fq5MhLO80uf'")
+    conn = psycopg2.connect("host='" + data['db_host'] + "' " + "port='" + data['db_port'] + "' " + "dbname='" + data['db_name'] + "' " + "user='" + data['db_user'] + "' " + "password='" + data['db_password'] + "'")   
     return conn
 
 
@@ -160,7 +164,7 @@ def item_creating(json_input, graph_type):
         'Processing_Date': datetime.date.today(),  # .strftime(' %d, %b %Y'),
         'output_json': Json(json_input)
     }
-    return item  
+    return item
 
 
 def creating_plot(table_name, item, table_creating_command):
@@ -175,8 +179,8 @@ def creating_plot(table_name, item, table_creating_command):
 
         if status:
             print('table exists')
-            conn=create_conn()
-            cur=conn.cursor()
+            conn = create_conn()
+            cur = conn.cursor()
             cur.execute(sql, item)
             conn.commit()
             if(cur.rowcount > 0):
