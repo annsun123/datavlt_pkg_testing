@@ -1,6 +1,6 @@
-import json 
+import json
 from codes.class_logging import logging_func
-validation = logging_func('value_validation_log',filepath='')
+validation = logging_func('value_validation_log', filepath='')
 validationlogger = validation.myLogger()
 
 
@@ -29,7 +29,7 @@ def problem_values(df_final):
        'qty(MC)']]
 
     problematic_values = json.loads(
-        problematic_values.astype(object).where(problematic_values.notnull(),None).to_json(orient='records')
+        problematic_values.astype(object).where(problematic_values.notnull(), None).to_json(orient='records')
     )
     if len(problematic_values) > 0:
         validationlogger.error('existing nan or negative quantity values')
@@ -41,7 +41,7 @@ def problem_values(df_final):
         validationlogger.error(
             'the index {} contains null'.format(list(df_final[df_final[[sku_col,
                                                                         series_col,
-                                                                        cname_col, 
+                                                                        cname_col,
                                                                         date_col,
                                                                         'system_date']].isnull().any(axis=1)].index))
         )
