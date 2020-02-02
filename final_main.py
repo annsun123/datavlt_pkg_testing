@@ -2,12 +2,12 @@ import os
 import pandas as pd
 import json
 import datetime
-from codes.gdrive.googleFiling import downloadfiles
+from codes.gdrive.googleFiling import downloadfiles 
 from codes.otherFunction import creating_plot, item_creating, create_conn
 from codes.class_logging import logging_func
 from codes.value_validation import problem_values
-from codes.class_dbinsert import inserting_table
-from codes.class_processing_table import processing
+from codes.class_dbinsert import inserting_table, insert_nonindo_table, insert_indo_table
+from codes.class_processing_table import processing, processing_history_indo
 from codes.class_rfm import createRFM_dataset, clustering, defineCluster
 from codes.class_sending_email import sending_emails
 import logging
@@ -30,6 +30,7 @@ def main():
     @sched.scheduled_job(trigger='cron',
                          hour=credentials['scheduler_time']['hour'],
                          minute=credentials['scheduler_time']['minute'])
+    
     def mainsub():
         customer_num_col = 'Customer No.'
         master_list_city = 'City'
@@ -44,7 +45,6 @@ def main():
         master_list_shoptype = 'Store Type'
         booster_conversion = 720
         starter_conversion = 120
-
 
         cred = credentials['google_api']['geo_api']
         from_address = credentials['mailing_credential']['from_address']
@@ -182,7 +182,7 @@ def main():
                                          'transaction_error')    
             creating_plot('error_report',
                           item_mapping,
-                          table_creating_command = '( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
+                          table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
 
             missing_json_dump = json.dumps(missing_customer_info)
             customer_missing = item_creating(missing_json_dump,
@@ -209,8 +209,6 @@ def main():
             raw_ds['invoice_date'] = pd.to_datetime(raw_ds['invoice_date'])
             raw_ds['Avg_order_gap'] = (raw_ds['invoice_date'].max() - raw_ds['invoice_date']).dt.days
 
-
-
             str_cols = ['Frequency', 'Monetary', 'Avg_order_gap', 'Recency']
             df_rfm_overall = createRFM_dataset(raw_ds)
             df_rfm_overall['cluster'] = clustering(df_rfm_overall, str_cols, "algo")
@@ -225,10 +223,9 @@ def main():
 
             final_table = final_table.astype(object).where(final_table.notnull(), None)
 
-
-            df_final_indo[['system_date','Invoice Date']] = df_final_indo[['system_date',
+            df_final_indo[['system_date', 'Invoice Date']] = df_final_indo[['system_date',
                                                                            'Invoice Date']].astype(str)
-            df_final_indo[['longtitude','latitude']] = df_final_indo[['longtitude',
+            df_final_indo[['longtitude', 'latitude']] = df_final_indo[['longtitude',
                                                                       'latitude']].astype(float)
             df_final_indo = df_final_indo.astype(object).where(df_final_indo.notnull(), None)
             indomart_json = df_final_indo.to_dict(orient='records')
@@ -248,7 +245,7 @@ def main():
                           table_creating_command='(Processing_Date text NOT NULL, Type text NOT NULL,  output_json JSONB)')
             mainlogging.info('preparaing rfm json')
 
-            df_rfm_output = df_rfm_output.astype(object).where(df_rfm_output.notnull(),None)
+            df_rfm_output = df_rfm_output.astype(object).where(df_rfm_output.notnull(), None)
 
             json_input = df_rfm_output.to_dict(orient='records')
             item_rfm = item_creating(json_input, 'json_rfm')
@@ -256,7 +253,7 @@ def main():
                           item_rfm,
                           table_creating_command='(Processing_Date text NOT NULL, Type text NOT NULL,  output_json JSONB)')
             mainlogging.info('preparaing customer error json')
-            customer_error = customer_error.astype(object).where(customer_error.notnull(),None)
+            customer_error = customer_error.astype(object).where(customer_error.notnull(), None)
 
             customer_error_json = customer_error[['customer_id',
                                                   master_list_cname,
@@ -266,7 +263,7 @@ def main():
             customer_rfm = item_creating(customer_error_json, 'cusotmer_error_json')
             creating_plot('json_main',
                           customer_rfm,
-                          table_creating_command= '(Processing_Date text NOT NULL, Type text NOT NULL,  output_json JSONB)')
+                          table_creating_command='(Processing_Date text NOT NULL, Type text NOT NULL,  output_json JSONB)')
 
         except Exception as e:
 
@@ -289,4 +286,4 @@ def main():
 
 
 if __name__ == '__main__':
-        main() 
+        main()
