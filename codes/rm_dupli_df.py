@@ -44,6 +44,8 @@ def rm_duplic_df(df_type, table):
             customer='customer_name'
         elif df_type=='final_indo':
             customer='distribution_center'
+        else:
+            customer='error'
         table['invoice_date'] = table['invoice_date'].apply(lambda x: x.date())
         idxs_table =  list(zip(old_table.invoice_date, old_table.sku, \
                         old_table.amount,old_table[customer]))            
