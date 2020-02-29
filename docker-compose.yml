@@ -13,7 +13,6 @@ services:
     networks:
       - pkg_datavlt
     volumes:
-      - $PWD/salim_pkg_dbdata:/var/lib/postgresql
       - $PWD/salim_pkg_dbdata/data:/var/lib/postgresql/data
 
   pkg_datavlt:
@@ -28,7 +27,6 @@ services:
       - db
     links:
       - db
-    restart: always
 
 networks:
   pkg_datavlt:
