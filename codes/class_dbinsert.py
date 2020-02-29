@@ -20,7 +20,8 @@ class inserting_table:
                  master_list_province,
                  master_list_shoptype,
                  master_list_address,
-                 master_list_contact):
+                 master_list_contact,
+                 dc_col):
         self.transaction_nonindo = transaction_nonindo
         self.transaction_indo = transaction_indo
         self.final_customer_table = final_customer_table
@@ -29,6 +30,7 @@ class inserting_table:
         self.master_list_shoptype = master_list_shoptype
         self.master_list_address = master_list_address
         self.master_list_contact = master_list_contact
+        self.dc_col = dc_col
 
     def mapping_nonindo_customer(self):
 
@@ -73,12 +75,13 @@ class inserting_table:
             df_transaction['Date'] = pd.to_datetime(df_transaction['Date'])
             df_transaction['year'] = df_transaction['Date'].apply(lambda x: x.year)
             df_transaction['month'] = df_transaction['Date'].apply(lambda x: x.month)
-            df_transaction['week_of_month'] = df_transaction['Date'].apply(
-                    lambda x: np.nan if pd.isnull(x)
-                    else int(math.ceil((x.day + x.replace(day=1).weekday())/7.0))
-            )
+            df_transaction['week'] = df_transaction['Date'].apply(lambda x: x.week)
+            #df_transaction['week_of_month'] = df_transaction['Date'].\
+            #apply(lambda x: np.nan if pd.isnull(x) else \
+             #     int(math.ceil((x.day+x.replace(day=1).weekday())/7.0)) )
+            
             df_transaction['system_date'] = datetime.date.today()
-            df_transaction.loc[df_transaction['city'].isna(), 'city'] = 'CITY NA'
+            df_transaction.loc[df_transaction['city'].isnull(), 'city'] = 'CITY NA'
             dblogger.info('mapping successfully')
             return df_transaction, non_customer_info
         except:
@@ -104,19 +107,18 @@ class inserting_table:
 
             non_customer_info = []
 
-            for x in self.transaction_indo['Distribution Center'].unique():
+            for x in self.transaction_indo[self.dc_col].unique():
                 if x in customer_indo['customer_name'].unique():
 
-                    self.transaction_indo.loc[self.transaction_indo['Distribution Center'] == x, 
+                    self.transaction_indo.loc[self.transaction_indo[self.dc_col] == x, 
                                               [self.master_list_city,
                                                self.master_list_province,
                                                self.master_list_shoptype,
                                                'latitude',
-                                               'longtitude']] = customer_indo[customer_indo['customer_name'] == x][['city',
-                                                                                                                    'province',
-                                                                                                                    'shop_type',
-                                                                                                                    'latitude',
-                                                                                                                    'longtitude']].iloc[-1].values
+                                               'longtitude']] =\
+                                              customer_indo[customer_indo['customer_name'] == x][['city',\
+                                                           'province', 'shop_type', 'latitude', \
+                                                           'longtitude']].iloc[-1].values
                 else:
 
                     non_customer_info.append(x)
@@ -131,11 +133,13 @@ class inserting_table:
             df_transaction['Invoice Date'] = pd.to_datetime(df_transaction['Invoice Date'])
             df_transaction['year'] = df_transaction['Invoice Date'].apply(lambda x: x.year)
             df_transaction['month'] = df_transaction['Invoice Date'].apply(lambda x: x.month)
-            df_transaction['week_of_month'] = df_transaction['Invoice Date'].apply(lambda x: np.nan
-                                                                                   if pd.isnull(x)
-                                                                                   else int(math.ceil((x.day + x.replace(day=1).weekday())/7.0)))
+            df_transaction['week'] = df_transaction['Invoice Date'].apply(lambda x: x.week)
+            #df_transaction['week_of_month'] = df_transaction['Invoice Date'].\
+            #apply(lambda x: np.nan if pd.isnull(x) else \
+             #     int(math.ceil((x.day+x.replace(day=1).weekday())/7.0)) )
             df_transaction['system_date'] = datetime.date.today()
-            df_transaction.loc[df_transaction[self.master_list_city].isna(),
+            
+            df_transaction.loc[df_transaction[self.master_list_city].isnull(),
                                self.master_list_city] = 'CITY NA'
             return df_transaction, non_customer_info
 
@@ -360,3 +364,63 @@ def insert_indo_table(df_final):
         con.commit()
         cur.close()
         con.close()
+
+def insert_json_table(values_list):
+
+    try:
+        command_create = ("""
+         CREATE TABLE json_main(
+         graph_type text NOT NULL,
+         category text NOT NULL,
+         dt_range text NOT NULL,
+         to_date text NOT NULL,
+         from_date text NOT NULL,
+         process_date date NOT NULL,
+         Json_file JSONB
+        );
+
+         """)
+
+        command_exists = (
+            """
+            SELECT EXISTS (
+            SELECT 1
+            FROM  information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'json_main'
+            );
+            """
+        )
+
+        con = create_conn()
+        cur = con.cursor()
+        rst = table_check(con, command_exists)
+        if (rst):
+            dblogger.info('table exists')
+            cur = con.cursor()
+            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+            con.commit()
+            if(cur.rowcount > 0):
+                dblogger.info('Rows Inserted Sucessfully in json_main')
+            else:
+                dblogger.info('Could not insert Rows in json_main')
+            cur.close()
+        else:
+            dblogger.info('create table')
+            cur = con.cursor()
+            cur.execute(command_create)
+            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+            con.commit()
+            if(cur.rowcount > 0):
+                dblogger.info('Rows Inserted Sucessfully in json_main')
+            else:
+                dblogger.info('Could not insert Rows in json_main')
+            cur.close()
+    except Exception as e:
+        con.rollback()
+        dblogger.error(e)
+    finally:
+        con.commit()
+        cur.close()
+        con.close()
+
