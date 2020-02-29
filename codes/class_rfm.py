@@ -30,20 +30,23 @@ def createRFM_dataset(df):
     df_rfm.rename(columns={'amount': 'Monetary',
                            'qty_packs': 'Frequency'}, inplace=True)
     df_rfm.drop('invoice_date', axis=1, inplace=True)
-    df_rfm['Avg_order_gap'] = round(df_rfm.Avg_order_gap)
+    df_rfm['Avg_order_gap'] = [round(i) for i in df_rfm.Avg_order_gap.values.tolist()]
 
+    value_recen=df_rfm['Recency'].drop_duplicates()
     df_rfm['R_score'] = pd.qcut(df_rfm['Recency'],
                                 4,
-                                labels=['4', '3', '2', '1'],
-                                duplicates='drop').astype(int)
+                                labels=['4', '3', '2', '1']
+                               ).astype(int) # duplicates='drop'
+    value_fre=df_rfm['Frequency'].drop_duplicates()                           
     df_rfm['F_score'] = pd.cut(df_rfm['Frequency'],
                                4,
-                               labels=['1', '2', '3', '4'],
-                               duplicates='drop').astype(int)
+                               labels=['1', '2', '3', '4']
+                               ).astype(int)#duplicates='drop'
+    value_mon=df_rfm['Monetary'].drop_duplicates()                             
     df_rfm['M_score'] = pd.qcut(df_rfm['Monetary'],
                                 4,
-                                labels=['1', '2', '3', '4'],
-                                duplicates='drop').astype(int)
+                                labels=['1', '2', '3', '4']
+                               ).astype(int)
     df_rfm['RFM_score'] = df_rfm.apply(lambda x: (int(x.R_score) + int(x.F_score) + int(x.M_score)) / 3,
                                        axis=1)
     return df_rfm
