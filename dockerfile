@@ -1,4 +1,4 @@
-FROM python:3.5
+FROM python:3.5.2
 
 ENV TZ=Asia/Singapore
 
@@ -9,6 +9,6 @@ WORKDIR /pkg_datavlt_2
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT python final_main.py 
+ENTRYPOINT python final_main_api.py
 
-CMD ["final_main.py"]
+CMD ["final_main_api.py"]
