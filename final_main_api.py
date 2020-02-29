@@ -196,7 +196,7 @@ def main():
             mainlogging.info('removing duplicates in non-indo table')
           
             df_final_nonindo =  rm_duplic_df('final_nonindo', df_final_nonindo) 
-            problem_nonindo = problem_values(df_final_nonindo)
+            problem_nonindo = problem_values(df_final_nonindo, 'non_indo')
             df_final_nonindo['invoice_date'] = pd.to_datetime(df_final_nonindo['invoice_date'])
             from_six_nonindo = (df_final_nonindo['invoice_date'].max()\
                               -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
@@ -248,7 +248,7 @@ def main():
                                                              'SKU':'sku' })
             mainlogging.info('removing duplicates in indo table')    
             df_final_indo =  rm_duplic_df('final_indo', df_final_indo) 
-            problem_indo = problem_values(df_final_indo)
+            problem_indo = problem_values(df_final_indo, 'indo')
             df_final_indo['invoice_date'] = pd.to_datetime(df_final_indo['invoice_date'])
             from_six_indo = (df_final_indo['invoice_date'].max()\
                               -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
