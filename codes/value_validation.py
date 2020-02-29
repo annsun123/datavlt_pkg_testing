@@ -5,28 +5,28 @@ validationlogger = validation.myLogger()
 
 
 def problem_values(df_final):
-    if 'Distribution Center' in df_final.columns:
-        date_col = 'Invoice Date'
-        cname_col = 'Distribution Center'
-        sku_col = 'SKU'
-        series_col = 'Series'
+    if 'distribution_center' in df_final.columns:
+        
+        cname_col = 'distribution_center'
+        sku_col = 'sku'
+        series_col = 'series_num'
     else:
-        date_col = 'Date'
+        
         cname_col = 'customer_name'
         sku_col = 'sku'
-        series_col = 'series'
+        series_col = 'series_num'
 
-    df_final[date_col] = df_final[date_col].astype(str)
+    df_final['invoice_date'] = df_final['invoice_date'].astype(str)
     problematic_values = df_final[
-        (df_final['qty(MC)'] < 0) | (df_final[[sku_col,
+        (df_final['qty_mc'] < 0) | (df_final[[sku_col,
                                                series_col,
                                                cname_col,
-                                               date_col,
+                                               'invoice_date',
                                                'system_date']].isnull().any(axis=1))
     ][[cname_col,
        sku_col,
-       date_col,
-       'qty(MC)']]
+       'invoice_date',
+       'qty_mc']]
 
     problematic_values = json.loads(
         problematic_values.astype(object).where(problematic_values.notnull(), None).to_json(orient='records')
@@ -42,7 +42,7 @@ def problem_values(df_final):
             'the index {} contains null'.format(list(df_final[df_final[[sku_col,
                                                                         series_col,
                                                                         cname_col,
-                                                                        date_col,
+                                                                        'invoice_date',
                                                                         'system_date']].isnull().any(axis=1)].index))
         )
     return problematic_values
