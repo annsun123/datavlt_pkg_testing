@@ -248,7 +248,7 @@ def main():
                                                              'SKU':'sku' })
             mainlogging.info('removing duplicates in indo table')    
             df_final_indo =  rm_duplic_df('final_indo', df_final_indo) 
-            problem_indo = problem_values(df_final_indo, 'indo')
+            #problem_indo = problem_values(df_final_indo, 'indo')
             df_final_indo['invoice_date'] = pd.to_datetime(df_final_indo['invoice_date'])
             from_six_indo = (df_final_indo['invoice_date'].max()\
                               -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
@@ -257,10 +257,10 @@ def main():
             from_one_indo = (df_final_indo['invoice_date'].max()\
                          -datetime.timedelta(1*365/12)).date().strftime('%Y-%m-%d') 
             
-            if len(problem_indo) > 0:
-                mainlogging.error('indo transaction contains error/none values')
-            else:
-                mainlogging.info('indo transactionn does not contain error/non values')
+            #if len(problem_indo) > 0:
+             #   mainlogging.error('indo transaction contains error/none values')
+            #else:
+             #   mainlogging.info('indo transactionn does not contain error/non values')
                  
             mainlogging.info('inserting indo final table')
             insert_indo_table(df_final_indo)    
@@ -296,7 +296,7 @@ def main():
         else:
             missing_customer_info2=['']
             df_final_indo=[]
-            problem_indo=[]
+            #problem_indo=[]
             
             
         mainlogging.info('successfully insert all tables')    
@@ -311,9 +311,9 @@ def main():
      #   from_date_input = (datetime.date.today() -datetime.timedelta(6*365/12)).strftime('%Y-%m-%d')  
 
     # error rfm creating 
-        if len(problem_indo) >= 0:
-            item_mapping = item_creating(problem_indo,'transaction_error')    
-            creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
+        #if len(problem_indo) >= 0:
+         #   item_mapping = item_creating(problem_indo,'transaction_error')    
+          #  creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
         if len(problem_nonindo) >= 0:
             item_mapping = item_creating(problem_nonindo,'transaction_error')    
             creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
