@@ -90,6 +90,7 @@ class processing:
 
             if self.ctable_status == 'not_uploaded':
                 final_customer_table = df_customer_old.copy()
+                problematic_table = []
             else:
 
                 try:
@@ -117,7 +118,7 @@ class processing:
                               self.master_list_contact,
                               self.master_list_shoptype,
                               self.master_list_province,
-                              'ind_info']:
+                              'indo_info']:
 
                         df_customer_new[i] = df_customer_new[i].str.upper()
                     df_customer_new = df_customer_new.rename(
@@ -144,8 +145,9 @@ class processing:
                         (df_customer['indo_info'] == 'NON_INDO')
                     ].append(df_customer[df_customer['indo_info'] == 'INDO'])
                     df_customer_api['full_address'] = df_customer_api[
-                        [self.master_list_address, self.master_list_city]
+                        [self.master_list_address, self.master_list_city, self.master_list_province]
                     ].apply(lambda x: ', '.join(x.dropna()) + ', Indonesia', axis=1)
+                    
                     processing_logger.info('acquiring customer address')
 
 # call api for df_customer_api where longtitude is null. [if the longtitue is not null which means it already has longtitude information, no need to call.]
@@ -246,13 +248,14 @@ class processing:
                     df_customer = df_customer.rename(columns={self.customer_num_col: 'customer_id'})
 
                     processing_logger.info('selecting out non address/city columns')
+                    df_customer['customer_id'] = df_customer['customer_id'].apply(lambda x: str(x))
 
                     df_customer_api = df_customer[
                         ~(pd.isnull(df_customer[self.master_list_address]) | pd.isnull(df_customer[self.master_list_city])) & 
                         (df_customer['indo_info'] == 'NON_INDO')
                     ].append(df_customer[df_customer['indo_info'] == 'INDO'])
                     df_customer_api['full_address'] = df_customer_api[[self.master_list_address,
-                                                                       self.master_list_city]].apply(
+                                                                       self.master_list_city,self.master_list_province]].apply(
                         lambda x: ', '.join(x.dropna()) + ', Indonesia', axis=1
                     )
 
@@ -316,7 +319,7 @@ class processing:
                     processing_logger.error(e)
 
         return final_customer_table, problematic_table
-
+    
     def processing_history_nonindo(self):
 
     # transaction_file_name,qty_col, description_col, date_col,booster_conversion=720, starter_conversion=120):
@@ -331,7 +334,7 @@ class processing:
 
             day_fill_test1 = day_fill.dropna(axis=1, how='all', inplace=False)
 
-            index_list = np.where(~day_fill_test1.iloc[0].isna())[0]
+            index_list = np.where(~day_fill_test1.iloc[0].isnull())[0]
 
             sku_indval = [(ind, value) for ind, value in enumerate(day_fill_test1.columns[index_list])
                           if 'Unnamed' not in value]
@@ -339,7 +342,7 @@ class processing:
             for i in range(len(sku_indval)):
                 day_fill_test1.insert(int(index_list[sku_indval[i][0]]) + i,
                                       'sku_name' + str(i), sku_indval[i][1])
-            index_list2 = np.where(~day_fill_test1.iloc[0].isna())[0]
+            index_list2 = np.where(~day_fill_test1.iloc[0].isnull())[0]
             day_fill_test1 = day_fill_test1.drop(day_fill_test1.index[0])
             day_fill_test1 = day_fill_test1.drop(day_fill_test1.index[-1])
 
@@ -387,75 +390,73 @@ class processing:
 
         except (IndexError, KeyError) as e:
             processing_logger.error('Please checking description name and sku names or Table format has been changed')
+    
+    
+def processing_history_indo(transaction_indo_file,booster_conversion,starter_conversion):
 
-
-def processing_history_indo(transaction_indo_file, booster_conversion, starter_conversion):
-
-    # transaction_file_name,qty_col, description_col, date_col,booster_conversion=720, starter_conversion=120):
-    try:
-    # transaction_file_name=downloadPath+transaction_nonindo
-        df = pd.read_excel(transaction_indo_file)
+   # transaction_file_name,qty_col, description_col, date_col,booster_conversion=720, starter_conversion=120):
+    try:           
+     #transaction_file_name=downloadPath+transaction_nonindo
+        df=pd.read_excel(transaction_indo_file)
         df.dropna(axis=1, how='all', inplace=True)
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-
-    # find start and end rows for creating different dataframes to merge
+        #################
+        
+         
+        
+        ### find start and end rows for creating different dataframes to merge 
         start_row = df[df.isin(['Invoice Date']).any(axis=1)].index
         end_row = df[df.isin(['Total']).any(axis=1)].index
-
-        df_final = pd.DataFrame()
+        ###############
+        
+         
+        
+        df_final= pd.DataFrame()
         for x in range(len(start_row)):
-            df_new = df.loc[start_row[x]:end_row[x], :].copy()
-            df_new.dropna(axis=1, how='all', inplace=True)
-# setting colnames - invoie date
-            row_skip = df_new[df_new.isin(['Invoice Date', 'Amount', 'Total']).any(axis=1)].index.to_list()
-            invoice_date = df_new.loc[row_skip[0], :] == 'Invoice Date'
-            df_new.rename(columns={invoice_date[invoice_date == True].index[0]: 'Invoice Date'},
-                          inplace=True)
-# setting rest of the cols
-            col_level_2 = df.iloc[row_skip[0] + 1, :] 
-            old_col = col_level_2[~col_level_2.isna()].index.tolist()
-            new_col = col_level_2[~col_level_2.isna()].values.tolist()
+            df_new = df.loc[start_row[x]:end_row[x],:].copy()
+            df_new.dropna(axis=1, how='all', inplace=True) ### removing all blank cols
+            ### setting colnames - invoie date
+            row_skip = df_new[df_new.isin(['Invoice Date', 'amount', 'Total']).any(axis=1)].index.tolist() 
+            invoice_date = df_new.loc[row_skip[0],:] == 'Invoice Date'
+            df_new.rename(columns = {invoice_date[invoice_date==True].index[0]: 'Invoice Date'}, inplace=True)
+            ### setting rest of the cols 
+            col_level_2=df.iloc[row_skip[0]+1,:] 
+            old_col = col_level_2[~col_level_2.isnull() ].index.tolist()
+            new_col = col_level_2[~col_level_2.isnull() ].values.tolist()
             df_new.rename(columns=dict(zip(old_col, new_col)), inplace=True)
-# Misc steps and cleaning
-# finding text to put in prod_desc
-            lst_sku = df_new.loc[row_skip[0], 'Sales Qty'].to_list()
-# finding index of Amount to add new cols
-            lst_append = [idx for idx, val in enumerate(df_new.columns.get_loc("Amount"))
-                          if val == True]
-# deleting rows with texts in it
-            df_new.drop(row_skip, axis=0, inplace=True)
-# fillig date col with forward fill
-            df_new.loc[:, 'Invoice Date']= df_new.loc[:, 'Invoice Date'].ffill().astype(str)
-
-# adding new columns and melting
+            ### 
+            ### Misc steps and cleaning 
+            lst_sku = df_new.loc[row_skip[0],'Sales Qty'].tolist() ## finding text to put in prod_desc
+            lst_append = [idx for idx, val in enumerate(df_new.columns.get_loc("amount")) if val == True] ### finding index of Amount to add new cols
+            
+            df_new.drop(row_skip, axis=0, inplace=True) ## deleting rows with texts in it 
+            df_new.loc[:,'Invoice Date']= df_new.loc[:,'Invoice Date'].ffill().astype(str) ## fillig date col with forward fill
+            ###
+            ### adding new columns and melting 
             for i in range(len(lst_append)):
-                df_new_col = df_new.iloc[:, [0,1, lst_append[i]-1, lst_append[i]]].copy()
+                df_new_col  = df_new.iloc[:,[0,1, lst_append[i]-1, lst_append[i]]].copy()
                 df_new_col['prod_desc'] = lst_sku[i]
                 df_final = df_final.append(df_new_col, ignore_index=True)
-
-# finding Series and SKU from prod_desc
-# removing numeric value-(23345
-        df_final['prod_desc'] =  [x[0].strip().upper()
-                                  for x in df_final['prod_desc'].str.split('-')]
-        df_final['SKU'] = [' '.join([x.split()[1], x.split()[6]])
-                           if 'BOOSTER' in x
-                           else 'STARTER DECK'
-                           for x in df_final['prod_desc']]
-        df_final['Series'] = [x.split()[len(x.split()) - 2]
-                              if 'SERIES' in x
-                              else 1 for x in df_final['prod_desc']]
-
-# removign blank rows
+            ###
+         
+        ### finding Series and SKU from prod_desc
+        df_final['prod_desc'] =  [x[0].strip().upper() for x in df_final['prod_desc'].str.split('-')] ## removing numeric value-(23345
+        #df_final['SKU'] = [' '.join([x.split()[1],  x.split()[6]]) if 'BOOSTER' in x else 'STARTER DECK' for x in  df_final['prod_desc']]
+        df_final['SKU']=df_final['prod_desc']
+        df_final['Series'] = [x.split()[len(x.split())-2] if 'SERIES' in x else 1 for x in  df_final['prod_desc']]
+        #### 
+        ### removign blank rows
         df_final.fillna(0, inplace=True)
-        df_final.loc[:, ['Sales Qty', 'Amount']] = df_final[['Sales Qty', 'Amount']].replace('-', 0)
-        df_final = df_final.rename(columns={'Sales Qty': 'qty(MC)'})
+        #df_final_test['qty(MC)']=df_final_test['qty(MC)'].apply(lambda x : np.nan if x =='-' else x)
+        #df_final.loc[:, ['Sales Qty', 'Amount']] = df_final[['Sales Qty', 'Amount']].replace('-',0)
+        df_final.loc[:,['Sales Qty', 'amount']] = df_final[['Sales Qty', 'amount']].applymap(lambda x: 0 if x=='-' else x) 
+        df_final=df_final.rename(columns={'Sales Qty':'qty(MC)'})
 
-        df_final.drop(df_final[(df_final['qty(MC)'] == 0) & (df_final['Amount'] == 0)].index, axis=0, inplace=True)
-        df_final['qty(pakcs)'] = df_final.apply(lambda x: x['qty(MC)'] * booster_conversion
-                                                if x['SKU'] != 'STARTER DECK' else x['qty(MC)'] * starter_conversion, axis=1)
+        df_final.drop(df_final[(df_final['qty(MC)'] == 0) & (df_final['amount'] == 0)].index, axis=0, inplace=True)
+        df_final['qty(pakcs)']=df_final.apply(lambda x: x['qty(MC)']*booster_conversion if x['SKU']!='STARTER DECK' else x['qty(MC)']*starter_conversion,axis=1)
         df_final.drop('prod_desc', axis=1, inplace=True)
-        del(df_new, df_new_col)
-        return df_final
-
+        del(df_new, df_new_col)  
+        return df_final 
+    
     except (IndexError, KeyError) as e:
         processing_logger.error('Please checking description name and sku names or Table format has been changed')
