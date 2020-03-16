@@ -51,7 +51,7 @@ def main():
     master_list_shoptype = 'Store Type'
     booster_conversion = 720
     starter_conversion = 120
-    dc_col = 'BranchName'
+    dc_col = 'Distribution Center'
     
     cred = credentials['google_api']['geo_api']
     from_address = credentials['mailing_credential']['from_address']
@@ -139,15 +139,11 @@ def main():
         if transaction_nonindo !='':
             df_nonindo = processing_cl.processing_history_nonindo()
             df_nonindo['amount_million'] = df_nonindo['amount'] / 1000000
-            df_nonindo = df_nonindo[['sku',
-                                                   'series',
-                                                   'customer_id',
-                                                   'customer_name',
-                                                   'Date',
-                                                   'qty(MC)',
-                                                   'qty(pakcs)',
-                                                   'amount',
-                                                   'amount_million']]
+            df_nonindo = df_nonindo[['sku', 'series','customer_id',\
+                                     'customer_name', \
+                                     'Date', 'qty(MC)',\
+                                     'qty(packs)', 'amount',\
+                                     'amount_million']]
             
             nonindo_table_upload = 'nonindo_table upaded'
         else:
@@ -196,7 +192,7 @@ def main():
             mainlogging.info('removing duplicates in non-indo table')
           
             df_final_nonindo =  rm_duplic_df('final_nonindo', df_final_nonindo) 
-            problem_nonindo = problem_values(df_final_nonindo, 'non_indo')
+            problem_nonindo = problem_values(df_final_nonindo)
             df_final_nonindo['invoice_date'] = pd.to_datetime(df_final_nonindo['invoice_date'])
             from_six_nonindo = (df_final_nonindo['invoice_date'].max()\
                               -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
@@ -243,12 +239,12 @@ def main():
             
         if len(transaction_indo)!=0:
             df_final_indo, missing_customer_info2 = db.mapping_indo_customer()
-            df_final_indo = df_final_indo.rename(columns={'Invoice Date':'invoice_date', 'Series':'series_num', \
+            df_final_indo = df_final_indo.rename(columns={'Invoice Date':'invoice_date', 'series':'series_num', \
                                                               'qty(MC)':'qty_mc', 'Distribution Center':'distribution_center',\
                                                              'SKU':'sku' })
             mainlogging.info('removing duplicates in indo table')    
             df_final_indo =  rm_duplic_df('final_indo', df_final_indo) 
-            #problem_indo = problem_values(df_final_indo, 'indo')
+            problem_indo = problem_values(df_final_indo)
             df_final_indo['invoice_date'] = pd.to_datetime(df_final_indo['invoice_date'])
             from_six_indo = (df_final_indo['invoice_date'].max()\
                               -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
@@ -257,10 +253,10 @@ def main():
             from_one_indo = (df_final_indo['invoice_date'].max()\
                          -datetime.timedelta(1*365/12)).date().strftime('%Y-%m-%d') 
             
-            #if len(problem_indo) > 0:
-             #   mainlogging.error('indo transaction contains error/none values')
-            #else:
-             #   mainlogging.info('indo transactionn does not contain error/non values')
+            if len(problem_indo) > 0:
+                mainlogging.error('indo transaction contains error/none values')
+            else:
+                mainlogging.info('indo transactionn does not contain error/non values')
                  
             mainlogging.info('inserting indo final table')
             insert_indo_table(df_final_indo)    
@@ -296,7 +292,7 @@ def main():
         else:
             missing_customer_info2=['']
             df_final_indo=[]
-            #problem_indo=[]
+            problem_indo=[]
             
             
         mainlogging.info('successfully insert all tables')    
@@ -311,9 +307,9 @@ def main():
      #   from_date_input = (datetime.date.today() -datetime.timedelta(6*365/12)).strftime('%Y-%m-%d')  
 
     # error rfm creating 
-        #if len(problem_indo) >= 0:
-         #   item_mapping = item_creating(problem_indo,'transaction_error')    
-          #  creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
+        if len(problem_indo) >= 0:
+            item_mapping = item_creating(problem_indo,'transaction_error')    
+            creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
         if len(problem_nonindo) >= 0:
             item_mapping = item_creating(problem_nonindo,'transaction_error')    
             creating_plot('error_report',item_mapping,table_creating_command='( Processing_Date date NOT NULL, Type text NOT NULL, output_json JSONB NOT NULL)')
