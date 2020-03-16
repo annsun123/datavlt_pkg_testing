@@ -13,6 +13,7 @@ jgntlogger = json_function.myLogger()
 
 def creating_json_nonindo(final_table_nonindo):
     
+    final_table_nonindo['qty_mc'] = final_table_nonindo[['sku','qty_mc']].apply(lambda x: x['qty_mc']/120 if x['sku']=='STARTER DECK'  else x['qty_mc']/720,1)
     final_table_nonindo = final_table_nonindo[final_table_nonindo['customer_name']!='Indomarco Prismatama, PT']
     final_table_nonindo['city'] = final_table_nonindo['city'].apply(lambda x: x.split(',')[0])
     final_table_nonindo[['city','province', 'sku']] = final_table_nonindo[['city','province', 'sku']].applymap(lambda x : x.title())
@@ -57,22 +58,24 @@ def creating_json_nonindo(final_table_nonindo):
     final_table_nonindo['product_name'] = final_table_nonindo[['sku', 'series_num']].apply(lambda x: x['sku']+'; Series '+ str(x['series_num']), 1)
      
     # top performing location
-    topltn_df = final_table_nonindo[['city','qty_packs','amount_million', \
+    topltn_df = final_table_nonindo[['city','qty_mc','amount_million', \
                                   'customer_id']].groupby('city').\
-                                  agg({'qty_packs':'sum', 'amount_million':'sum'}).\
+                                  agg({'qty_mc':'sum', 'amount_million':'sum'}).\
                                   reset_index()
-    topltn_df=topltn_df.round({'amount_million':2, 'qty_packs':0})
+    topltn_df=topltn_df.round({'amount_million':2, 'qty_mc':2})
+  #  topltn_df['qty_mc'] = topltn_df['qty_mc'].apply(lambda x: round(x)) 
     topltn_df = topltn_df.astype(object).where(topltn_df.notnull(), None)                           
     topltn_json = creating_graph_json(topltn_df, \
                                       graph_description = 'top_performing_location', \
                                       filter_link = 'NA')
 
     # top performing companies 
-    topcomp_df = final_table_nonindo[['customer_name', 'qty_packs','amount_million', \
+    topcomp_df = final_table_nonindo[['customer_name', 'qty_mc','amount_million', \
                                   'customer_id']].groupby('customer_name').\
-                                  agg({'qty_packs':'sum', 'amount_million':'sum'}).\
+                                  agg({'qty_mc':'sum', 'amount_million':'sum'}).\
                                   reset_index()
-    topcomp_df = topcomp_df.round({'amount_million':2, 'qty_packs':0})                              
+    topcomp_df = topcomp_df.round({'amount_million':2, 'qty_mc':2})                              
+    #topcomp_df['qty_mc'] = topcomp_df['qty_mc'].apply(lambda x: round(x)) 
     topcomp_df = topcomp_df.astype(object).where(topcomp_df.notnull(), None)                              
     topcomp_json = creating_graph_json(topcomp_df, \
                                      graph_description = 'top_performing_companies', \
@@ -81,21 +84,23 @@ def creating_json_nonindo(final_table_nonindo):
                                 
     # top performing products  
     
-    topprodct_df = final_table_nonindo[['product_name', 'qty_packs', 'amount_million', \
+    topprodct_df = final_table_nonindo[['product_name', 'qty_mc', 'amount_million', \
                                   'customer_id']].groupby('product_name').\
-                                  agg({'qty_packs': 'sum', 'amount_million': 'sum'}). \
+                                  agg({'qty_mc': 'sum', 'amount_million': 'sum'}). \
                                   reset_index()
-    topprodct_df = topprodct_df.round({'amount_million':2, 'qty_packs':0})                                
+    topprodct_df = topprodct_df.round({'amount_million':2, 'qty_mc':2}) 
+    #topprodct_df['qty_mc'] = topprodct_df['qty_mc'].apply(lambda x: round(x))                               
     topprodct_df = topprodct_df.astype(object).where(topprodct_df.notnull(), None)                                 
     topprodct_json = creating_graph_json(topprodct_df,\
                                          graph_description = 'top_performing_product', \
                                          filter_link = 'NA')
                       
     # creating json for all different graphs 
-    geochart_prov_df = final_table_nonindo[['province', 'qty_packs', 'amount_million']].groupby('province').\
-                                  agg({'qty_packs': 'sum', 'amount_million': 'sum'}). \
+    geochart_prov_df = final_table_nonindo[['province', 'qty_mc', 'amount_million']].groupby('province').\
+                                  agg({'qty_mc': 'sum', 'amount_million': 'sum'}). \
                                   reset_index()
-    geochart_prov_df = geochart_prov_df.round({'amount_million':2, 'qty_packs':0})    
+    geochart_prov_df = geochart_prov_df.round({'amount_million':2, 'qty_mc':2})    
+   # geochart_prov_df['qty_mc'] = geochart_prov_df['qty_mc'].apply(lambda x: round(x))
     geochart_prov_df = geochart_prov_df.sort_values(by='province')
     np.random.seed(123)
     for index,prov in enumerate(geochart_prov_df['province'].unique()):  
@@ -113,10 +118,11 @@ def creating_json_nonindo(final_table_nonindo):
                                                  
     # geo-chart on level of all companies in one province
     
-    geochart_citi_df = final_table_nonindo[['province', 'city', 'qty_packs', 'amount_million']].groupby(['province', 'city']).\
-                                  agg({'qty_packs': 'sum', 'amount_million': 'sum'}). \
+    geochart_citi_df = final_table_nonindo[['province', 'city', 'qty_mc', 'amount_million']].groupby(['province', 'city']).\
+                                  agg({'qty_mc': 'sum', 'amount_million': 'sum'}). \
                                   reset_index(level=1)
-    geochart_citi_df = geochart_citi_df.round({'amount_million':2, 'qty_packs':0})                               
+    geochart_citi_df = geochart_citi_df.round({'amount_million':2, 'qty_mc':2})
+    #geochart_citi_df['qty_mc'] = geochart_citi_df['qty_mc'].apply(lambda x: round(x))                             
     #total revenue for each province
          
               
@@ -155,10 +161,11 @@ def creating_json_nonindo(final_table_nonindo):
     #getting cities geo coordinates 
     table=geochart_citi_df.groupby(['province', 'city'])['amount_million'].sum().to_frame().rename(columns={'amount_million': 'city_total_amount_million'}).round(2)
     
-    geochart_comp_df = final_table_nonindo[['province', 'city', 'customer_name', 'qty_packs', 'amount_million']].groupby(['province', 'city', 'customer_name']).\
-                                  agg({'qty_packs': 'sum', 'amount_million': 'sum'}). \
+    geochart_comp_df = final_table_nonindo[['province', 'city', 'customer_name', 'qty_mc', 'amount_million']].groupby(['province', 'city', 'customer_name']).\
+                                  agg({'qty_mc': 'sum', 'amount_million': 'sum'}). \
                                   reset_index(level=2)
-    geochart_comp_df = geochart_comp_df.round({'amount_million':2, 'qty_packs':0})                               
+    geochart_comp_df = geochart_comp_df.round({'amount_million':2, 'qty_mc':2})      
+   # geochart_comp_df['qty_mc'] = geochart_comp_df['qty_mc'].apply(lambda x: round(x))                          
     geochart_comp_df['color_category']=pd.qcut(geochart_comp_df['amount_million'],4, labels=[3,2,1,0])   
     geochart_comp_df['size_category']=pd.qcut(geochart_comp_df['amount_million'],4, labels=[0,1,2,3])  
     geochart_comp_df['company_percentage']=0
@@ -194,20 +201,21 @@ def creating_json_nonindo(final_table_nonindo):
       
     ### doughnut charts 
     table = final_table_nonindo[['province',\
-                         'city', 'customer_name', 'qty_packs', \
+                         'city', 'customer_name', 'qty_mc', \
                          'amount_million', 'sku', 'series_num']].\
                          groupby(['province','city', 'customer_name','sku', 'series_num']).\
-                          agg({'qty_packs': 'sum', 'amount_million': 'sum'}).reset_index()
-    table = table.round({'amount_million':2, 'qty_packs':0})                        
+                          agg({'qty_mc': 'sum', 'amount_million': 'sum'}).reset_index()
+    table = table.round({'amount_million':2, 'qty_mc':2})
+   # table['qty_mc'] = table['qty_mc'].apply(lambda x: round(x))    
     table['series_num'] = table['series_num'].apply(lambda x: 'series ' +str(x))
     table['backgroundColor'] = table['sku'].apply(lambda x: color_legend[x])
     table = table.merge(table.groupby(['province','city','customer_name'])['amount_million'].sum().round(2).reset_index().rename(columns={'amount_million':'comp_total_rev'}), how='left', on=['province','city','customer_name'])
     table = table.merge(table.groupby(['province','city','customer_name','sku'])['amount_million'].sum().round(2).reset_index().rename(columns={'amount_million':'sku_total_amount_million'}), how='left', on=['province','city','customer_name', 'sku'])
     
     table['sku_percentage'] = [round(value,2) for value in (table['sku_total_amount_million'] / table['comp_total_rev']*100).tolist()]
-    table['series_percentage'] = [round(value,2) for value in (table['amount_million'] / table['sku_total_amount_million']*100).tolist()]
+    table['series_percentage'] = [round(value,2) for value in (table['amount_million'] / table['comp_total_rev']*100).tolist()]
     table = table.rename(columns={'amount_million':'series_total_amount_million'})
-    table = table[['province', 'city', 'customer_name', 'sku', 'series_num', 'qty_packs',\
+    table = table[['province', 'city', 'customer_name', 'sku', 'series_num', 'qty_mc',\
                     'backgroundColor', 'comp_total_rev', 'sku_total_amount_million', 'sku_percentage',\
                    'series_total_amount_million','series_percentage' ]]
 
@@ -215,7 +223,7 @@ def creating_json_nonindo(final_table_nonindo):
     
     json_df2 = table.groupby(['province','city','customer_name','sku','backgroundColor',\
                               'comp_total_rev','sku_total_amount_million',\
-                              'sku_percentage'])[['series_num','qty_packs', 'series_total_amount_million','series_percentage']].\
+                              'sku_percentage'])[['series_num','qty_mc', 'series_total_amount_million','series_percentage']].\
     apply(lambda x: x.to_dict(orient='records')).reset_index(name="data").\
     groupby(['province', 'city', 'customer_name'])[['sku','sku_total_amount_million', 'sku_percentage','backgroundColor', 'data']].\
     apply(lambda x: x.to_dict(orient='records')).reset_index(name="series_level")
