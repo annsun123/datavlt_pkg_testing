@@ -13,8 +13,8 @@ from codes.class_logging import logging_func
 spt_function=logging_func('jsonfunction_log',filepath='')
 jsonlogger = spt_function.myLogger()
 
-with open('./json_credential/postgres_credential_external.json') as file:
-#with open('./json_credential/postgres_credential_amazon.json') as file:
+#with open('./json_credential/postgres_credential_external.json') as file:
+with open('./json_credential/postgres_credential_amazon.json') as file:
     data = json.load(file)
     
 def create_conn():
