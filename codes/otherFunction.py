@@ -21,8 +21,8 @@ from codes.class_logging import logging_func
 geo = logging_func('otherfunction_log', filepath='')
 otherlogger = geo.myLogger()
 
-with open('./json_credential/postgres_credential_external.json') as file:
-#with open('./json_credential/postgres_credential_amazon.json') as file:
+#with open('./json_credential/postgres_credential_external.json') as file:
+with open('./json_credential/postgres_credential_amazon.json') as file:
     data = json.load(file)
 
 
