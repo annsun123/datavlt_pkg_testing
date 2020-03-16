@@ -302,13 +302,14 @@ def insert_indo_table(df_final):
         command_create = ("""
          CREATE TABLE final_indo(
          invoice_date date NOT NULL,
-         distribution_center text NOT NULL,
-         qty_mc numeric,
-         amount numeric,
-         sku text NOT NULL,
-         series_num text NOT NULL,
+         customer_name text NOT NULL,
          qty_packs numeric,
-         amount_millions numeric,
+         amount numeric,
+         series_num text NOT NULL,
+         sku text NOT NULL,
+         
+         qty_mc numeric,
+         amount_million numeric,
          city text,
          province text,
          shop_type text,
