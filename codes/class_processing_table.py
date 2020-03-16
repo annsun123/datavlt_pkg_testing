@@ -360,16 +360,16 @@ class processing:
                                 'customer_id',
                                 'customer_name',
                                 'sku_type',
-                                'qty(MC)',
+                                'qty(packs)',
                                 'amount']
                 df_final_test = df_final_test.append(data)
 
-            df_final_test['qty(MC)'] = df_final_test['qty(MC)'].apply(lambda x: np.nan
+            df_final_test['qty(packs)'] = df_final_test['qty(packs)'].apply(lambda x: np.nan
                                                                       if x =='-' else x)
             df_final_test['amount'] = df_final_test['amount'].apply(lambda x: np.nan
                                                                     if x =='-' else x)
-            df_final_test = df_final_test.dropna(subset=['qty(MC)', 'amount'])
-
+            df_final_test = df_final_test.dropna(subset=['qty(packs)', 'amount'])
+            
     # sku name Processing
             df_final_test['sku'] = df_final_test['sku_type'].apply(lambda x: 'BOOSTER A'
                                                                    if ' A' in x.upper()
@@ -380,9 +380,9 @@ class processing:
                                                                       if bool(re.search(r'\d', x))
                                                                       else '1')
             processing_logger.info('sereis contains values: ' + ', '.join(df_final_test['series'].unique()))
-            df_final_test['qty(pakcs)'] = df_final_test.apply(lambda x: x['qty(MC)'] * self.booster_conversion
+            df_final_test['qty(MC)'] = df_final_test.apply(lambda x: x['qty(packs)'] /  self.booster_conversion
                                                               if x['sku'] != 'STARTER DECK'
-                                                              else x['qty(MC)'] * self.starter_conversion,
+                                                              else x['qty(packs)'] / self.starter_conversion,
                                                               axis=1)
             processing_logger.info('table contains columns: ' + ', '.join(df_final_test.columns))
             processing_logger.info('table pre-processed successfully')
@@ -413,9 +413,10 @@ def processing_history_indo(transaction_indo_file,booster_conversion,starter_con
         
         df_final= pd.DataFrame()
         for x in range(len(start_row)):
-            df_new = df.loc[start_row[x]:end_row[x],:].copy()
+            df_new = df.loc[start_row[x]-1:end_row[x],:].copy()
             df_new.dropna(axis=1, how='all', inplace=True) ### removing all blank cols
             ### setting colnames - invoie date
+            series_num = re.search(r'\d', [u for u in df_new.iloc[0].values if type(u)==str][0]).group(0)
             row_skip = df_new[df_new.isin(['Invoice Date', 'amount', 'Total']).any(axis=1)].index.tolist() 
             invoice_date = df_new.loc[row_skip[0],:] == 'Invoice Date'
             df_new.rename(columns = {invoice_date[invoice_date==True].index[0]: 'Invoice Date'}, inplace=True)
@@ -431,30 +432,30 @@ def processing_history_indo(transaction_indo_file,booster_conversion,starter_con
             
             df_new.drop(row_skip, axis=0, inplace=True) ## deleting rows with texts in it 
             df_new.loc[:,'Invoice Date']= df_new.loc[:,'Invoice Date'].ffill().astype(str) ## fillig date col with forward fill
+            df_new=df_new.drop(df_new.index[0])
+            df_new['series'] = series_num 
             ###
             ### adding new columns and melting 
             for i in range(len(lst_append)):
                 df_new_col  = df_new.iloc[:,[0,1, lst_append[i]-1, lst_append[i]]].copy()
-                df_new_col['prod_desc'] = lst_sku[i]
+                df_new_col['series']=df_new['series']
+                df_new_col['SKU'] = lst_sku[i]
                 df_final = df_final.append(df_new_col, ignore_index=True)
             ###
          
         ### finding Series and SKU from prod_desc
-        df_final['prod_desc'] =  [x[0].strip().upper() for x in df_final['prod_desc'].str.split('-')] ## removing numeric value-(23345
-        #df_final['SKU'] = [' '.join([x.split()[1],  x.split()[6]]) if 'BOOSTER' in x else 'STARTER DECK' for x in  df_final['prod_desc']]
-        df_final['SKU']=df_final['prod_desc']
-        df_final['Series'] = [x.split()[len(x.split())-2] if 'SERIES' in x else 1 for x in  df_final['prod_desc']]
+        
         #### 
         ### removign blank rows
         df_final.fillna(0, inplace=True)
         #df_final_test['qty(MC)']=df_final_test['qty(MC)'].apply(lambda x : np.nan if x =='-' else x)
         #df_final.loc[:, ['Sales Qty', 'Amount']] = df_final[['Sales Qty', 'Amount']].replace('-',0)
         df_final.loc[:,['Sales Qty', 'amount']] = df_final[['Sales Qty', 'amount']].applymap(lambda x: 0 if x=='-' else x) 
-        df_final=df_final.rename(columns={'Sales Qty':'qty(MC)'})
-
-        df_final.drop(df_final[(df_final['qty(MC)'] == 0) & (df_final['amount'] == 0)].index, axis=0, inplace=True)
-        df_final['qty(pakcs)']=df_final.apply(lambda x: x['qty(MC)']*booster_conversion if x['SKU']!='STARTER DECK' else x['qty(MC)']*starter_conversion,axis=1)
-        df_final.drop('prod_desc', axis=1, inplace=True)
+        df_final=df_final.rename(columns={'Sales Qty':'qty(packs)'})
+        
+        df_final.drop(df_final[(df_final['qty(packs)'] == 0) & (df_final['amount'] == 0)].index, axis=0, inplace=True)
+        df_final['qty(MC)']=df_final.apply(lambda x: x['qty(packs)']/booster_conversion if x['SKU']!='STARTER DECK' else x['qty(packs)']/starter_conversion,axis=1)
+        #df_final.drop('prod_desc', axis=1, inplace=True)
         del(df_new, df_new_col)  
         return df_final 
     
