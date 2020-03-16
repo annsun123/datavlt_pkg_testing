@@ -4,8 +4,8 @@ validation = logging_func('value_validation_log', filepath='')
 validationlogger = validation.myLogger()
 
 
-def problem_values(df_final, df_type):
-    if df_type=='indo':
+def problem_values(df_final):
+    if 'distribution_center' in df_final.columns:
         
         cname_col = 'distribution_center'
         sku_col = 'sku'
