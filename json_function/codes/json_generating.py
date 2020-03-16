@@ -13,7 +13,7 @@ jgntlogger = json_function.myLogger()
 
 def creating_json_nonindo(final_table_nonindo):
     
-    final_table_nonindo['qty_mc'] = final_table_nonindo[['sku','qty_mc']].apply(lambda x: x['qty_mc']/120 if x['sku']=='STARTER DECK'  else x['qty_mc']/720,1)
+   # final_table_nonindo['qty_mc'] = final_table_nonindo[['sku','qty_mc']].apply(lambda x: x['qty_mc']/120 if x['sku']=='STARTER DECK'  else x['qty_mc']/720,1)
     final_table_nonindo = final_table_nonindo[final_table_nonindo['customer_name']!='Indomarco Prismatama, PT']
     final_table_nonindo['city'] = final_table_nonindo['city'].apply(lambda x: x.split(',')[0])
     final_table_nonindo[['city','province', 'sku']] = final_table_nonindo[['city','province', 'sku']].applymap(lambda x : x.title())
