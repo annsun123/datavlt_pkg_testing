@@ -8,19 +8,17 @@ import os
 import pandas as pd
 import json
 import datetime
-import shutil
-import numpy as np
-import logging
 from psycopg2.extras import Json
 import warnings
 warnings.filterwarnings('ignore')
 #self build library
-from json_function.codes.supporting_function import value_existance
+
 from json_function.codes.json_generating import creating_json_nonindo
 from json_function.codes.json_generating_indo import creating_json_indo
+from json_function.codes.json_gen_mobile import json_main_mobile
 from json_function.codes.json_generating_rfm import creating_json_rfm
 from codes.gdrive.googleFiling import downloadfiles 
-from codes.otherFunction import creating_plot, item_creating, create_conn, table_existance
+from codes.otherFunction import creating_plot, item_creating, create_conn
 from codes.class_logging import logging_func
 from codes.value_validation import problem_values
 from codes.class_dbinsert import inserting_table,insert_nonindo_table,insert_indo_table, insert_json_table
@@ -195,7 +193,8 @@ def main():
             problem_nonindo = problem_values(df_final_nonindo)
             df_final_nonindo['invoice_date'] = pd.to_datetime(df_final_nonindo['invoice_date'])
             from_six_nonindo = (df_final_nonindo['invoice_date'].max()\
-                              -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
+                              -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')
+            
             from_three_nonindo = (df_final_nonindo['invoice_date'].max()\
                               -datetime.timedelta(3*365/12)).date().strftime('%Y-%m-%d')    
             from_one_nonindo = (df_final_nonindo['invoice_date'].max()\
@@ -207,12 +206,13 @@ def main():
                 
             mainlogging.info('inserting nonindo final table')
             insert_nonindo_table(df_final_nonindo)
+            json_mobile__nonindo=json_main_mobile('final_nonindo', from_six_nonindo, 'other')
             
-         
             to_date=''
             from_date=''
             
             for date_opt in zip((from_six_nonindo, from_three_nonindo, from_one_nonindo),('6_month', '3_month', '1_month')):
+                
                 conn=create_conn()
                 cur = conn.cursor()
                 #from_date_nonindo = date_opt[0]
@@ -221,9 +221,10 @@ def main():
                 cur.close()
                 conn.close()
                 # there are 11 pieces json for graphs in the json_list    
+
                 mainlogging.info('generating non_indo json files')
                 json_nonindolist = creating_json_nonindo(final_table_nonindo)
-    
+                
                 db_json_nonindotable=[]
                 for i in json_nonindolist:
                        
@@ -231,6 +232,8 @@ def main():
                                         date_opt[1], to_date, from_date, \
                                          datetime.date.today(), Json(i)])
                 insert_json_table(db_json_nonindotable)
+                
+           #insert_mobile(from_six_nonindo)     
           
         else:
             missing_customer_info1=['']
@@ -247,7 +250,8 @@ def main():
             problem_indo = problem_values(df_final_indo)
             df_final_indo['invoice_date'] = pd.to_datetime(df_final_indo['invoice_date'])
             from_six_indo = (df_final_indo['invoice_date'].max()\
-                              -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')    
+                              -datetime.timedelta(6*365/12)).date().strftime('%Y-%m-%d')
+         
             from_three_indo = (df_final_indo['invoice_date'].max()\
                               -datetime.timedelta(3*365/12)).date().strftime('%Y-%m-%d')    
             from_one_indo = (df_final_indo['invoice_date'].max()\
@@ -260,6 +264,7 @@ def main():
                  
             mainlogging.info('inserting indo final table')
             insert_indo_table(df_final_indo)    
+            json_main_mobile('final_indo', from_six_indo, 'indomaret')
             
             mainlogging.info('preparaing final json')
              
@@ -334,10 +339,17 @@ def main():
         
         
         # creating RFM JSON
-        rfm_json_table=creating_json_rfm()
-        insert_json_table(rfm_json_table)          
-
-             
+        
+        rfm_json_table, mobile_json_com = creating_json_rfm()
+        insert_json_table(rfm_json_table)   
+        
+        conn=create_conn()
+        cur = conn.cursor()        
+        cur.execute("INSERT into json_mobile(graph_type, category, process_date,Json_file) VALUES (%s, %s, %s,%s)", mobile_json_com)
+        conn.commit()
+        cur.close()
+        conn.close()  
+           
      # non-indo and indo json creation
        
         for filename in file_downloaded:
