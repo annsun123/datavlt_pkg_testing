@@ -65,20 +65,10 @@ def table_check(conn, command_exists):
 
 
 
-def insert_json_table(values_list):
+def insert_json_table(values_list, table_name, table_command):
 
     try:
-        command_create = ("""
-         CREATE TABLE json_main(
-         graph_type text NOT NULL,
-         category text NOT NULL,
-         to_date text NOT NULL,
-         from_date text NOT NULL,
-         process_date date NOT NULL,
-         Json_file JSONB
-        );
-
-         """)
+        command_create = (table_command)
 
         command_exists = (
             """
@@ -86,9 +76,7 @@ def insert_json_table(values_list):
             SELECT 1
             FROM  information_schema.tables
             WHERE table_schema = 'public'
-            AND table_name = 'json_main'
-            );
-            """
+            AND table_name ='""" + table_name+ "');"
         )
 
         con = create_conn()
@@ -97,23 +85,24 @@ def insert_json_table(values_list):
         if (rst):
             jsonlogger.info('table exists')
             cur = con.cursor()
-            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+            psycopg2.extras.execute_values(cur, 'INSERT INTO '+ table_name + ' VALUES %s', values_list)
             con.commit()
             if(cur.rowcount > 0):
-                jsonlogger.info('Rows Inserted Sucessfully in json_main')
+                jsonlogger.info('Rows Inserted Sucessfully in table')
             else:
-                jsonlogger.info('Could not insert Rows in json_main')
+                jsonlogger.info('Could not insert Rows in table')
             cur.close()
         else:
             jsonlogger.info('create table')
             cur = con.cursor()
             cur.execute(command_create)
-            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+           # try:
+            psycopg2.extras.execute_values(cur, 'INSERT INTO '+ table_name + ' VALUES %s', values_list)
             con.commit()
             if(cur.rowcount > 0):
-                jsonlogger.info('Rows Inserted Sucessfully in json_main')
+                jsonlogger.info('Rows Inserted Sucessfully in table')
             else:
-                jsonlogger.info('Could not insert Rows in json_main')
+                jsonlogger.info('Could not insert Rows in table')
             cur.close()
     except Exception as e:
         con.rollback()
@@ -122,7 +111,6 @@ def insert_json_table(values_list):
         con.commit()
         cur.close()
         con.close()
-
 
 def color_variant(hex_color, brightness_offset=1):
     """ takes a color like #87c95f and produces a lighter or darker variant """
