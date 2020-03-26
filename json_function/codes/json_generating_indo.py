@@ -18,7 +18,8 @@ json_function=logging_func('jsongeneration_log_indo',filepath='/')
 jgntlogger = json_function.myLogger()
 
 def creating_json_indo(final_table_indo):
-    final_table_indo['qty_mc'] = final_table_indo[['sku','qty_mc']].apply(lambda x: x['qty_mc']/120 if x['sku']=='STARTER DECK'  else x['qty_mc']/720,1)
+    
+
     final_table_indo = final_table_indo[final_table_indo['customer_name']!='Indomarco Prismatama, PT']
     final_table_indo['city'] = final_table_indo['city'].apply(lambda x: x.split(',')[0])
     final_table_indo[['city','province', 'sku']] = final_table_indo[['city','province', 'sku']].applymap(lambda x : x.title())
@@ -338,7 +339,7 @@ def creating_json_indo(final_table_indo):
     table['backgroundColor'] = table['product_name'].apply(lambda x: color_dic[x.split(';')[0]][int(x.split('Series ')[1])])
     table['stack'] = table['product_name'].apply(lambda x: stack_dic[x.split(';')[0]])
     table['index'] = [i for i in range(len(table))]
-    table['date_label']=table[['date_range','week_of_month']].apply(lambda x: x['date_range']+'\n'+'week '+ str(x['week_of_month']),1)
+    table['date_label']=table[['date_range','week_of_month']].apply(lambda x: x['date_range']+' '+'week '+ str(x['week_of_month']),1)
     table=table.rename(columns={'product_name':'label'})
     final_chart_json={}
     final_chart=[]
@@ -380,6 +381,7 @@ def creating_json_indo(final_table_indo):
                  bar_chart_loc,
                 bar_chart_com,
                 bar_comps_city,
-                final_chart_json]    
+                final_chart_json                
+                ]    
                                   
     return json_list
