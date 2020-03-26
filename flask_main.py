@@ -35,6 +35,12 @@ def get_json():
     date_range=data['date_range']
     return jsonify({"output": json_api(to_date,from_date,category,date_range)})
     
-
+@app.route('/get_json_api_mobile', methods=['POST','GET'])
+def get_json_mobile():
+    from mobile_api import mobile_api 
+    data = request.get_json(force=True)
+    category=data['category']
+    return jsonify({"output": mobile_api (category)})
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5002)
