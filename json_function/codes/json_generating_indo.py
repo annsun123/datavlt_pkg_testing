@@ -325,28 +325,51 @@ def creating_json_indo(final_table_indo):
         if i not in stack_dic.keys():
             stack_dic[i] = max(list(stack_dic.values()))+1
 
-
     table = final_table_indo.\
     groupby(['customer_name', 'year', 'month', 'product_name',\
              'week_of_month'])['amount_million'].sum().reset_index()#level=-1)
     table = table.round({'amount_million':2})           
-    table[['year','month','week_of_month']]=table[['year','month','week_of_month']].applymap(lambda x: int(x))    
+    table[['year','month','week_of_month']] = table[['year','month','week_of_month']].applymap(lambda x: int(x)) 
+    table['date_label'] = table[['year','month']].apply(lambda x: datetime.date(x['year'],x['month'],1),1)
     
     
-    table['beg_date']=table[['year','week_of_month']].apply(lambda x: getDateRangeFromWeek(x['year'],x['week_of_month'])[0],1)
-    table['end_date']=table[['year','week_of_month']].apply(lambda x: getDateRangeFromWeek(x['year'],x['week_of_month'])[1],1)
-    table['date_range']=table['beg_date'].astype(str)+' to '+ table['end_date'].astype(str)
-    table['backgroundColor'] = table['product_name'].apply(lambda x: color_dic[x.split(';')[0]][int(x.split('Series ')[1])])
-    table['stack'] = table['product_name'].apply(lambda x: stack_dic[x.split(';')[0]])
-    table['index'] = [i for i in range(len(table))]
-    table['date_label']=table[['date_range','week_of_month']].apply(lambda x: x['date_range']+' '+'week '+ str(x['week_of_month']),1)
-    table=table.rename(columns={'product_name':'label'})
+    min_date = final_table_indo['invoice_date'].min()
+    max_date = final_table_indo['invoice_date'].max()
+    
+    df = pd.DataFrame()
+    df_date = pd.DataFrame()
+    idx=pd.date_range(min_date.strftime('%Y-%m-%d'), max_date.strftime('%Y-%m-%d'), freq='W')
+    df_date['date']=idx
+    df_date['year'] = df_date['date'].apply(lambda x: x.year)
+    df_date['week_of_month'] = df_date['date'].apply(lambda x: x.week)
+    df_date = df_date.drop('date', 1)
+    
+    for customer in table.customer_name.unique():
+     
+        dc_table = table[table['customer_name'] == customer]  
+        df_new = df_date.merge(dc_table, how='left', on=['year','week_of_month']).fillna(0)
+        df_new['customer_name']=customer
+       
+        df = df.append(df_new)
+    
+    df['beg_date']=df[['year','week_of_month']].apply(lambda x: getDateRangeFromWeek(x['year'],x['week_of_month'])[0],1)
+    df['end_date']=df[['year','week_of_month']].apply(lambda x: getDateRangeFromWeek(x['year'],x['week_of_month'])[1],1)
+    df['date_range']=df['beg_date'].astype(str)+' to '+ df['end_date'].astype(str)
+    max_num=final_table_indo['series_num'].max()
+    df['product_name']=df['product_name'].apply(lambda x: 'Booster A; Series '+str(max_num) if x==0 else x )
+    df['backgroundColor'] = df['product_name'].apply(lambda x: color_dic[x.split(';')[0]][int(x.split('Series ')[1])])
+    
+    df['stack'] = df['product_name'].apply(lambda x: stack_dic[x.split(';')[0]])
+    df['index'] = [i for i in range(len(df))]
+    df['date_label']=df[['date_range','week_of_month']].apply(lambda x: x['date_range']+' '+'week '+ str(x['week_of_month']),1)
+    df=df.rename(columns={'product_name':'label'})
     final_chart_json={}
     final_chart=[]
-    for dc in table['customer_name'].unique():
+    
+    for dc in df['customer_name'].unique():
         dc_dic={}
        
-        dc_table = table[table['customer_name']==dc].reset_index(drop=True)
+        dc_table = df[df['customer_name']==dc].reset_index(drop=True)
         dc_dic['customer_name']=dc
     
         dc_dic['labels'] = sorted(dc_table['date_label'].unique(),reverse=True)
@@ -366,7 +389,7 @@ def creating_json_indo(final_table_indo):
         table3 = table3.reindex(sku_list_new).reset_index()
         dc_dic['datasets'] = table3.to_dict(orient='records')
         final_chart.append(dc_dic)
-    final_chart_json['graph_description']='bar_DC_weeks'
+    final_chart_json['graph_description']='bar_com_weeks'
     final_chart_json['data']=final_chart
     
         
