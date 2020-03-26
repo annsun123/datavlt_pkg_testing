@@ -214,7 +214,7 @@ class processing:
                                                                  'indo_info']]
                     final_customer_table['updated_date'] = datetime.date.today()
                     processing_logger.info('successfully process customer table')
-
+                    return final_customer_table
                 except IndexError as e:
                     processing_logger.error(e)
 
@@ -315,10 +315,11 @@ class processing:
                     final_customer_table['updated_date'] = datetime.date.today()
 
                     processing_logger.info('processing customer table successfully')
+                    return final_customer_table, problematic_table
                 except IndexError as e:
                     processing_logger.error(e)
 
-        return final_customer_table, problematic_table
+        
     
     def processing_history_nonindo(self):
 
