@@ -15,8 +15,8 @@ import time
 spt_function=logging_func('jsonfunction_log',filepath='/')
 jsonlogger = spt_function.myLogger()
 
-with open('./json_credential/postgres_credential_amazon.json') as file:
-#with open('./json_function/credentials/postgres_credential_docker.json') as file:
+#with open('./json_credential/postgres_credential_amazon.json') as file:
+with open('./json_function/credentials/postgres_credential_docker.json') as file:
     data=json.load(file)
 
 def getDateRangeFromWeek(p_year,p_week):

@@ -8,6 +8,7 @@ json_function=logging_func('jsongeneration_log',filepath='/')
 jgntlogger = json_function.myLogger()
 
 def creating_json_nonindo(df, graph_type): 
+   # df['qty_mc'] = df[['sku','qty_mc']].apply(lambda x: x['qty_mc']/120 if x['sku']=='STARTER DECK'  else x['qty_mc']/720,1)
     
     df = df[df['customer_name']!='Indomarco Prismatama, PT']
     df['city'] = df['city'].apply(lambda x: x.split(',')[0])
