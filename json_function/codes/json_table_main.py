@@ -4,15 +4,12 @@ Created on Wed Feb  5 21:10:29 2020
 
 @author: anyan
 """
-
 from json_function.codes.supporting_function import create_conn, value_existance, insert_json_table
 from json_function.codes.json_generating import creating_json_nonindo
-from json_function.codes.json_generating_indo import creating_json_indo
-import numpy as np 
+from json_function.codes.json_generating_indo import creating_json_indo 
 from psycopg2.extras import Json
 import pandas as pd
 import datetime
-
 from json_function.codes.logging import logging_func
 
 json_function=logging_func('jsontable_log',filepath='/')
@@ -33,7 +30,8 @@ def json_graph_nonindo(to_date, from_date, date_range):
         json_output = pd.read_sql_query( "select json_file from json_main  where to_date = '' \
                      and category='non_indo'\
                      and dt_range='" + date_range + "'\
-                    and process_date=(select max(process_date) from json_main where category='non_indo')", conn)
+                    and process_date=(select max(process_date) from json_main where category='non_indo' \
+                    and dt_range='" + date_range + "')", conn)
         
         json_list=[x for x in [json_output.iloc[i][0] for i in range(len(json_output))]]
         jtablelogger.info('retriving past six month non-indo data')
@@ -60,11 +58,8 @@ def json_graph_nonindo(to_date, from_date, date_range):
             cur.close()
             conn.close()
     
-
             # there are 14 pieces json for graphs in the json_list    
             json_list = creating_json_nonindo(final_table_nonindo)
-
-      
             db_json_table=[]
             for i in json_list:
                 db_json_table.append([i['graph_description'], 'non_indo', 'custom_date',\
@@ -88,16 +83,15 @@ def json_graph_indo(to_date, from_date,date_range):
         json_output = pd.read_sql_query( "select json_file from json_main  where to_date = '' \
                      and category='indo'\
                      and dt_range='" + date_range + "'\
-                    and process_date=(select max(process_date) from json_main where category='indo')", conn)
+                    and process_date=(select max(process_date) from json_main where category='indo' \
+                    and dt_range='" + date_range + "')", conn)
         json_list=[x for x in [json_output.iloc[i][0] for i in range(len(json_output))]]
  
-
         cur.close()
         conn.close()
     else: 
         
         status = value_existance(conn, to_date, from_date, 'indo')
-        
         if status:
               json_output = pd.read_sql_query( "select json_file from json_main  where to_date = '" + \
                 to_date + "' and from_date = '"+ from_date +\
@@ -117,19 +111,14 @@ def json_graph_indo(to_date, from_date,date_range):
             cur.close()
             conn.close()
     
-            
-
-            
             # there are 13 pieces json for graphs in the json_list    
             json_list = creating_json_indo(final_table_indo)
 
-      
             db_json_table=[]
             for i in json_list:
                    
                 db_json_table.append([i['graph_description'], 'indo', 'custom_date', \
                                      to_date, from_date, datetime.date.today(), Json(i)])
-    
             insert_json_table(db_json_table)
         
     return json_list     
