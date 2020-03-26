@@ -40,10 +40,8 @@ def rm_duplic_df(df_type, table):
         conn.close()                     
       
         table.columns = old_table.columns         
-        if df_type=='final_nonindo':
-            customer='customer_name'
-        else:
-            customer='distribution_center'
+        customer='customer_name'
+
         table['invoice_date'] = table['invoice_date'].apply(lambda x: x.date())
         idxs_table =  list(zip(old_table.invoice_date, old_table.sku, \
                         old_table.amount,old_table[customer]))            
