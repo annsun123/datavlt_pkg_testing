@@ -206,7 +206,7 @@ def main():
                 
             mainlogging.info('inserting nonindo final table')
             insert_nonindo_table(df_final_nonindo)
-            json_mobile__nonindo=json_main_mobile('final_nonindo', from_six_nonindo, 'other')
+           
             
             to_date=''
             from_date=''
@@ -231,7 +231,15 @@ def main():
                     db_json_nonindotable.append([i['graph_description'], 'non_indo', \
                                         date_opt[1], to_date, from_date, \
                                          datetime.date.today(), Json(i)])
-                insert_json_table(db_json_nonindotable)
+                insert_json_table(db_json_nonindotable, 'json_main')
+                
+                mobile_json_list= json_main_mobile(final_table_nonindo, 'non_indo')
+                mobile_json_table=[]
+                for i in mobile_json_list:
+                    mobile_json_table.append([i['graph_description'], 'non_indo', date_opt[1],
+                                          to_date, from_date, datetime.date.today(), Json(i)])
+                
+                insert_json_table(mobile_json_table, 'json_mobile')
                 
            #insert_mobile(from_six_nonindo)     
           
@@ -264,7 +272,7 @@ def main():
                  
             mainlogging.info('inserting indo final table')
             insert_indo_table(df_final_indo)    
-            json_main_mobile('final_indo', from_six_indo, 'indomaret')
+  
             
             mainlogging.info('preparaing final json')
              
@@ -290,7 +298,15 @@ def main():
                     db_json_indotable.append([i['graph_description'], 'indo', date_opt[1],\
                                          to_date, from_date, datetime.date.today(), Json(i)])
                  
-                insert_json_table(db_json_indotable)
+                insert_json_table(db_json_indotable,'json_main')
+                
+                mobile_json_list= json_main_mobile(final_table_indo, 'indo')
+                mobile_json_table=[]
+                for i in mobile_json_list:
+                    mobile_json_table.append([i['graph_description'], 'indo', date_opt[1],
+                                          to_date, from_date, datetime.date.today(), Json(i)])
+                
+                insert_json_table(mobile_json_table, 'json_mobile')
             processing_status='default json table insert correctly'
       
 
@@ -341,11 +357,11 @@ def main():
         # creating RFM JSON
         
         rfm_json_table, mobile_json_com = creating_json_rfm()
-        insert_json_table(rfm_json_table)   
+        insert_json_table(rfm_json_table,'json_main')   
         
         conn=create_conn()
         cur = conn.cursor()        
-        cur.execute("INSERT into json_mobile(graph_type, category, process_date,Json_file) VALUES (%s, %s, %s,%s)", mobile_json_com)
+        cur.execute("INSERT into json_mobile(graph_type, category, dt_range, to_date, from_date, process_date,Json_file) VALUES (%s, %s, %s,%s, %s, %s,%s)", mobile_json_com)
         conn.commit()
         cur.close()
         conn.close()  
