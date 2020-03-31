@@ -91,6 +91,8 @@ class processing:
             if self.ctable_status == 'not_uploaded':
                 final_customer_table = df_customer_old.copy()
                 problematic_table = []
+                return final_customer_table, problematic_table
+                
             else:
 
                 try:
@@ -214,7 +216,7 @@ class processing:
                                                                  'indo_info']]
                     final_customer_table['updated_date'] = datetime.date.today()
                     processing_logger.info('successfully process customer table')
-                    return final_customer_table
+                    return final_customer_table, problematic_table
                 except IndexError as e:
                     processing_logger.error(e)
 
