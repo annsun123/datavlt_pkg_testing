@@ -15,8 +15,8 @@ import time
 spt_function=logging_func('jsonfunction_log',filepath='/')
 jsonlogger = spt_function.myLogger()
 
-#with open('./json_credential/postgres_credential_amazon.json') as file:
-with open('./json_function/credentials/postgres_credential_docker.json') as file:
+with open('./json_credential/postgres_credential_amazon.json') as file:
+#with open('./json_function/credentials/postgres_credential_docker.json') as file:
     data=json.load(file)
 
 def getDateRangeFromWeek(p_year,p_week):
@@ -45,10 +45,10 @@ def creating_graph_json(topltn_df, graph_description, filter_link):
 
 
 
-def value_existance(conn, to_date, from_date, indo_type):
+def value_existance(conn, table_type, to_date, from_date, indo_type):
     cur = conn.cursor()
 
-    cur.execute("select * from json_main where to_date=%s and from_date=%s and category=%s" ,
+    cur.execute("select * from " + table_type +  " where to_date=%s and from_date=%s and category=%s" ,
                 (to_date, from_date, indo_type))
     status = bool(cur.rowcount)
 
@@ -64,53 +64,6 @@ def table_check(conn, command_exists):
     return rst 
 
 
-
-def insert_json_table(values_list, table_name, table_command):
-
-    try:
-        command_create = (table_command)
-
-        command_exists = (
-            """
-            SELECT EXISTS (
-            SELECT 1
-            FROM  information_schema.tables
-            WHERE table_schema = 'public'
-            AND table_name ='""" + table_name+ "');"
-        )
-
-        con = create_conn()
-        cur = con.cursor()
-        rst = table_check(con, command_exists)
-        if (rst):
-            jsonlogger.info('table exists')
-            cur = con.cursor()
-            psycopg2.extras.execute_values(cur, 'INSERT INTO '+ table_name + ' VALUES %s', values_list)
-            con.commit()
-            if(cur.rowcount > 0):
-                jsonlogger.info('Rows Inserted Sucessfully in table')
-            else:
-                jsonlogger.info('Could not insert Rows in table')
-            cur.close()
-        else:
-            jsonlogger.info('create table')
-            cur = con.cursor()
-            cur.execute(command_create)
-           # try:
-            psycopg2.extras.execute_values(cur, 'INSERT INTO '+ table_name + ' VALUES %s', values_list)
-            con.commit()
-            if(cur.rowcount > 0):
-                jsonlogger.info('Rows Inserted Sucessfully in table')
-            else:
-                jsonlogger.info('Could not insert Rows in table')
-            cur.close()
-    except Exception as e:
-        con.rollback()
-        jsonlogger.error(e)
-    finally:
-        con.commit()
-        cur.close()
-        con.close()
 
 def color_variant(hex_color, brightness_offset=1):
     """ takes a color like #87c95f and produces a lighter or darker variant """
