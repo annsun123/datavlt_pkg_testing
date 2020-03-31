@@ -366,11 +366,10 @@ def insert_indo_table(df_final):
         cur.close()
         con.close()
 
-def insert_json_table(values_list):
+def insert_json_table(values_list, table_name):
 
     try:
-        command_create = ("""
-         CREATE TABLE json_main(
+        command_create = ("CREATE TABLE " + table_name+ """(
          graph_type text NOT NULL,
          category text NOT NULL,
          dt_range text NOT NULL,
@@ -388,9 +387,9 @@ def insert_json_table(values_list):
             SELECT 1
             FROM  information_schema.tables
             WHERE table_schema = 'public'
-            AND table_name = 'json_main'
-            );
-            """
+            AND table_name = '""" + table_name+ "');"
+            
+          
         )
 
         con = create_conn()
@@ -399,23 +398,23 @@ def insert_json_table(values_list):
         if (rst):
             dblogger.info('table exists')
             cur = con.cursor()
-            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+            psycopg2.extras.execute_values(cur, "INSERT INTO " + table_name+ " VALUES %s", values_list)
             con.commit()
             if(cur.rowcount > 0):
-                dblogger.info('Rows Inserted Sucessfully in json_main')
+                dblogger.info('Rows Inserted Sucessfully in table')
             else:
-                dblogger.info('Could not insert Rows in json_main')
+                dblogger.info('Could not insert Rows in table')
             cur.close()
         else:
             dblogger.info('create table')
             cur = con.cursor()
             cur.execute(command_create)
-            psycopg2.extras.execute_values(cur, 'INSERT INTO json_main VALUES %s', values_list)
+            psycopg2.extras.execute_values(cur, "INSERT INTO " + table_name+ " VALUES %s", values_list)
             con.commit()
             if(cur.rowcount > 0):
-                dblogger.info('Rows Inserted Sucessfully in json_main')
+                dblogger.info('Rows Inserted Sucessfully in table')
             else:
-                dblogger.info('Could not insert Rows in json_main')
+                dblogger.info('Could not insert Rows in table')
             cur.close()
     except Exception as e:
         con.rollback()
