@@ -33,14 +33,19 @@ def get_json():
     from_date = data['from_date']
     category=data['category']
     date_range=data['date_range']
-    return jsonify({"output": json_api(to_date,from_date,category,date_range)})
+    web = True
+    return jsonify({"output": json_api(to_date,from_date,category,date_range,web)})
     
 @app.route('/get_json_api_mobile', methods=['POST','GET'])
 def get_json_mobile():
-    from mobile_api import mobile_api 
+    from new_function import json_api
     data = request.get_json(force=True)
+    to_date = data['to_date']
+    from_date = data['from_date']
     category=data['category']
-    return jsonify({"output": mobile_api (category)})
+    date_range=data['date_range']
+    web = False
+    return jsonify({"output": json_api (to_date,from_date,category,date_range,web)})
     
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5002)
