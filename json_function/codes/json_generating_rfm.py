@@ -220,6 +220,7 @@ def creating_json_rfm():
         rfm_json_table.append ([description, 'rfm', 'NA',\
                                  to_date, from_date, datetime.date.today(), Json(json_output)])
         
-    insight_mobile_table = ['insight_mobile_companies', 'insight', datetime.date.today(), Json(output_json_com)]
+    insight_mobile_table = ['insight_mobile_companies', 'rfm', 'NA',\
+                                 to_date, from_date, datetime.date.today(), Json(output_json_com)]
     
     return rfm_json_table, insight_mobile_table                         
